@@ -1,0 +1,18 @@
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDE and editor files
+.vscode
+
+# Project specific files
+zygo.zip
+api_test_script.py
+workflow_test_script.py
+e2e_test_script.py
+example.py
+temp_workspaces
+handover.txt
+Makefile
+
