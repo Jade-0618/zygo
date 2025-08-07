@@ -1,0 +1,47 @@
+{
+    "LIGHT_SENSOR_Interface": {
+        "functions": [
+            {
+                "name": "light_sensor_init",
+                "description": "Initializes the light sensor on the big green board.",
+                "return_type": "void",
+                "parameters": []
+            },
+            {
+                "name": "light_sensor_read_lux",
+                "description": "Reads the light intensity in lux.",
+                "return_type": "float",
+                "parameters": []
+            },
+            {
+                "name": "light_sensor_set_threshold",
+                "description": "Sets a threshold for light intensity. If the light intensity exceeds this threshold, an event can be triggered.",
+                "return_type": "void",
+                "parameters": [
+                    {
+                        "name": "threshold",
+                        "type": "float"
+                    }
+                ]
+            },
+            {
+                "name": "light_sensor_enable_interrupt",
+                "description": "Enables an interrupt that triggers when the light intensity exceeds the set threshold.",
+                "return_type": "void",
+                "parameters": []
+            },
+            {
+                "name": "light_sensor_disable_interrupt",
+                "description": "Disables the light intensity interrupt.",
+                "return_type": "void",
+                "parameters": []
+            },
+            {
+                "name": "light_sensor_get_status",
+                "description": "Returns the current status of the light sensor, including whether the threshold has been exceeded.",
+                "return_type": "int",
+                "parameters": []
+            }
+        ]
+    }
+}

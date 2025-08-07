@@ -1,0 +1,310 @@
+{
+  "BMI280_Interface": {
+    "status_enum": {
+      "bmi280_status_t": [
+        "BMI280_OK",
+        "BMI280_ERROR_I2C",
+        "BMI280_ERROR_SPI",
+        "BMI280_ERROR_REG_READ",
+        "BMI280_ERROR_REG_WRITE",
+        "BMI280_ERROR_TIMEOUT",
+        "BMI280_ERROR_CALIBRATION_DATA",
+        "BMI280_ERROR_INVALID_ODR",
+        "BMI280_ERROR_INVALID_RANGE",
+        "BMI280_ERROR_SELF_TEST"
+      ]
+    },
+    "functions": [
+      {
+        "name": "bmi280_init",
+        "return_type": "bmi280_status_t",
+        "parameters": [
+          {
+            "name": "comm_mode",
+            "type": "bmi280_comm_mode_t",
+            "description": "通信模式（I2C_MODE/SPI_MODE）"
+          },
+          {
+            "name": "i2c_port",
+            "type": "uint8_t",
+            "description": "I2C端口号（仅I2C_MODE有效，如I2C_NUM_0）"
+          },
+          {
+            "name": "sda_pin",
+            "type": "uint8_t",
+            "description": "I2C数据引脚编号（仅I2C_MODE有效，如GPIO21）"
+          },
+          {
+            "name": "scl_pin",
+            "type": "uint8_t",
+            "description": "I2C时钟引脚编号（仅I2C_MODE有效，如GPIO22）"
+          },
+          {
+            "name": "spi_cs_pin",
+            "type": "uint8_t",
+            "description": "SPI片选引脚编号（仅SPI_MODE有效，如GPIO18）"
+          },
+          {
+            "name": "i2c_addr",
+            "type": "uint8_t",
+            "description": "I2C设备地址（0x68=SDO引脚接地，0x69=SDO引脚接VDD，仅I2C_MODE有效）"
+          },
+          {
+            "name": "spi_3wire",
+            "type": "bool",
+            "description": "SPI是否使用3线模式（默认4线，仅SPI_MODE有效）"
+          },
+          {
+            "name": "interrupt_pin",
+            "type": "int8_t",
+            "description": "中断引脚编号（-1=禁用，如GPIO38）"
+          }
+        ]
+      },
+      {
+        "name": "bmi280_set_accel_config",
+        "return_type": "bmi280_status_t",
+        "parameters": [
+          {
+            "name": "range",
+            "type": "bmi280_accel_range_t",
+            "description": "加速度计量程（2G/4G/8G/16G）"
+          },
+          {
+            "name": "odr",
+            "type": "bmi280_accel_odr_t",
+            "description": "加速度计输出数据速率（100HZ/200HZ/400HZ/800HZ/1600HZ）"
+          },
+          {
+            "name": "bw",
+            "type": "bmi280_accel_bw_t",
+            "description": "加速度计带宽（NORMAL/LOW_NOISE）"
+          }
+        ]
+      },
+      {
+        "name": "bmi280_set_gyro_config",
+        "return_type": "bmi280_status_t",
+        "parameters": [
+          {
+            "name": "range",
+            "type": "bmi280_gyro_range_t",
+            "description": "陀螺仪量程（2000DPS/1000DPS/500DPS/250DPS）"
+          },
+          {
+            "name": "odr",
+            "type": "bmi280_gyro_odr_t",
+            "description": "陀螺仪输出数据速率（100HZ/200HZ/400HZ/800HZ/1600HZ）"
+          },
+          {
+            "name": "bw",
+            "type": "bmi280_gyro_bw_t",
+            "description": "陀螺仪带宽（NORMAL/LOW_NOISE）"
+          }
+        ]
+      },
+      {
+        "name": "bmi280_read_accel_raw",
+        "return_type": "bmi280_status_t",
+        "parameters": [
+          {
+            "name": "accel_x",
+            "type": "int16_t*",
+            "description": "输出参数（X轴原始值）"
+          },
+          {
+            "name": "accel_y",
+            "type": "int16_t*",
+            "description": "输出参数（Y轴原始值）"
+          },
+          {
+            "name": "accel_z",
+            "type": "int16_t*",
+            "description": "输出参数（Z轴原始值）"
+          }
+        ]
+      },
+      {
+        "name": "bmi280_read_gyro_raw",
+        "return_type": "bmi280_status_t",
+        "parameters": [
+          {
+            "name": "gyro_x",
+            "type": "int16_t*",
+            "description": "输出参数（X轴原始值）"
+          },
+          {
+            "name": "gyro_y",
+            "type": "int16_t*",
+            "description": "输出参数（Y轴原始值）"
+          },
+          {
+            "name": "gyro_z",
+            "type": "int16_t*",
+            "description": "输出参数（Z轴原始值）"
+          }
+        ]
+      },
+      {
+        "name": "bmi280_read_accel",
+        "return_type": "bmi280_status_t",
+        "parameters": [
+          {
+            "name": "accel_x",
+            "type": "float*",
+            "description": "输出参数（X轴加速度，单位：m/s²）"
+          },
+          {
+            "name": "accel_y",
+            "type": "float*",
+            "description": "输出参数（Y轴加速度，单位：m/s²）"
+          },
+          {
+            "name": "accel_z",
+            "type": "float*",
+            "description": "输出参数（Z轴加速度，单位：m/s²）"
+          }
+        ]
+      },
+      {
+        "name": "bmi280_read_gyro",
+        "return_type": "bmi280_status_t",
+        "parameters": [
+          {
+            "name": "gyro_x",
+            "type": "float*",
+            "description": "输出参数（X轴角速度，单位：°/s）"
+          },
+          {
+            "name": "gyro_y",
+            "type": "float*",
+            "description": "输出参数（Y轴角速度，单位：°/s）"
+          },
+          {
+            "name": "gyro_z",
+            "type": "float*",
+            "description": "输出参数（Z轴角速度，单位：°/s）"
+          }
+        ]
+      },
+      {
+        "name": "bmi280_soft_reset",
+        "return_type": "bmi280_status_t",
+        "parameters": []
+      },
+      {
+        "name": "bmi280_set_power_mode",
+        "return_type": "bmi280_status_t",
+        "parameters": [
+          {
+            "name": "accel_pmu",
+            "type": "bmi280_pmu_mode_t",
+            "description": "加速度计功耗模式（SUSPEND/NORMAL/LOW_POWER）"
+          },
+          {
+            "name": "gyro_pmu",
+            "type": "bmi280_pmu_mode_t",
+            "description": "陀螺仪功耗模式（SUSPEND/NORMAL/FAST_STARTUP）"
+          }
+        ]
+      },
+      {
+        "name": "bmi280_get_meas_duration",
+        "return_type": "uint32_t",
+        "parameters": [],
+        "description": "获取当前配置下的测量耗时（单位：ms）"
+      },
+      {
+        "name": "bmi280_self_test",
+        "return_type": "bmi280_status_t",
+        "parameters": [],
+        "description": "执行传感器自检（返回自检结果）"
+      }
+    ],
+    "data_types": {
+      "bmi280_comm_mode_t": [
+        "BMI280_I2C_MODE",
+        "BMI280_SPI_MODE"
+      ],
+      "bmi280_accel_range_t": [
+        "BMI280_ACCEL_RANGE_2G",
+        "BMI280_ACCEL_RANGE_4G",
+        "BMI280_ACCEL_RANGE_8G",
+        "BMI280_ACCEL_RANGE_16G"
+      ],
+      "bmi280_accel_odr_t": [
+        "BMI280_ACCEL_ODR_100HZ",
+        "BMI280_ACCEL_ODR_200HZ",
+        "BMI280_ACCEL_ODR_400HZ",
+        "BMI280_ACCEL_ODR_800HZ",
+        "BMI280_ACCEL_ODR_1600HZ"
+      ],
+      "bmi280_accel_bw_t": [
+        "BMI280_ACCEL_BW_NORMAL",
+        "BMI280_ACCEL_BW_LOW_NOISE"
+      ],
+      "bmi280_gyro_range_t": [
+        "BMI280_GYRO_RANGE_2000DPS",
+        "BMI280_GYRO_RANGE_1000DPS",
+        "BMI280_GYRO_RANGE_500DPS",
+        "BMI280_GYRO_RANGE_250DPS"
+      ],
+      "bmi280_gyro_odr_t": [
+        "BMI280_GYRO_ODR_100HZ",
+        "BMI280_GYRO_ODR_200HZ",
+        "BMI280_GYRO_ODR_400HZ",
+        "BMI280_GYRO_ODR_800HZ",
+        "BMI280_GYRO_ODR_1600HZ"
+      ],
+      "bmi280_gyro_bw_t": [
+        "BMI280_GYRO_BW_NORMAL",
+        "BMI280_GYRO_BW_LOW_NOISE"
+      ],
+      "bmi280_pmu_mode_t": [
+        "BMI280_PMU_SUSPEND",
+        "BMI280_PMU_NORMAL",
+        "BMI280_PMU_LOW_POWER",
+        "BMI280_PMU_FAST_STARTUP"
+      ],
+      "bmi280_raw_data_t": {
+        "accel_x": "int16_t",
+        "accel_y": "int16_t",
+        "accel_z": "int16_t",
+        "gyro_x": "int16_t",
+        "gyro_y": "int16_t",
+        "gyro_z": "int16_t"
+      },
+      "bmi280_calib_param_t": {
+        "accel_offset_x": "int16_t",
+        "accel_offset_y": "int16_t",
+        "accel_offset_z": "int16_t",
+        "gyro_offset_x": "int16_t",
+        "gyro_offset_y": "int16_t",
+        "gyro_offset_z": "int16_t",
+        "accel_sensitivity_x": "float",
+        "accel_sensitivity_y": "float",
+        "accel_sensitivity_z": "float",
+        "gyro_sensitivity_x": "float",
+        "gyro_sensitivity_y": "float",
+        "gyro_sensitivity_z": "float"
+      }
+    },
+    "hardware_config": {
+      "comm_mode": "BMI280_I2C_MODE",
+      "i2c_port": 0,
+      "sda_pin": 21,
+      "scl_pin": 22,
+      "i2c_addr": "0x68",
+      "spi_cs_pin": 18,
+      "i2c_frequency": 400000,
+      "spi_frequency": 1000000,
+      "interrupt_pin": -1,
+      "power_pin": -1
+    },
+    "error_handling": {
+      "retry_count": 3,
+      "timeout_threshold": 200
+    },
+    "calibration_note": "传感器内部集成校准参数（存储于EEPROM），初始化时自动读取并用于原始数据补偿。加速度计校准参数包括偏移量（offset_x/y/z）和灵敏度（sensitivity_x/y/z），陀螺仪同理。自检功能通过执行内置测试流程验证传感器机械和电子性能。"
+  }
+}

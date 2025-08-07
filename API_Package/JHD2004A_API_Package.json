@@ -1,0 +1,104 @@
+{
+  "JHD2004A_Interface": {
+    "status_enum": {
+      "jhd2004a_status_t": [
+        "JHD2004A_OK",
+        "JHD2004A_ERROR_I2C",
+        "JHD2004A_ERROR_TIMEOUT",
+        "JHD2004A_ERROR_INVALID_DATA",
+        "JHD2004A_ERROR_NOT_INITIALIZED",
+        "JHD2004A_ERROR_INVALID_POSITION"
+      ]
+    },
+    "functions": [
+      {
+        "name": "jhd2004a_init",
+        "return_type": "jhd2004a_status_t",
+        "parameters": [
+          {"name": "i2c_port", "type": "i2c_port_t", "description": "I2C端口号（如I2C_NUM_0）"},
+          {"name": "i2c_addr", "type": "uint8_t", "description": "I2C设备地址（0x27或0x3F，默认0x27）"},
+          {"name": "i2c_clk_hz", "type": "uint32_t", "description": "I2C时钟频率（单位：Hz，默认100000）"},
+          {"name": "backlight_on", "type": "bool", "description": "初始化是否开启背光（true=开启，false=关闭）"}
+        ]
+      },
+      {
+        "name": "jhd2004a_display_string",
+        "return_type": "jhd2004a_status_t",
+        "parameters": [
+          {"name": "row", "type": "uint8_t", "description": "显示行（0=第1行，1=第2行）"},
+          {"name": "col", "type": "uint8_t", "description": "起始列（0-15）"},
+          {"name": "str", "type": "const char*", "description": "待显示字符串（最大16字符/行）"}
+        ]
+      },
+      {
+        "name": "jhd2004a_display_char",
+        "return_type": "jhd2004a_status_t",
+        "parameters": [
+          {"name": "row", "type": "uint8_t", "description": "显示行（0=第1行，1=第2行）"},
+          {"name": "col", "type": "uint8_t", "description": "列位置（0-15）"},
+          {"name": "char_code", "type": "uint8_t", "description": "字符编码（ASCII码或自定义字符）"}
+        ]
+      },
+      {
+        "name": "jhd2004a_clear",
+        "return_type": "jhd2004a_status_t",
+        "parameters": []
+      },
+      {
+        "name": "jhd2004a_set_cursor",
+        "return_type": "jhd2004a_status_t",
+        "parameters": [
+          {"name": "row", "type": "uint8_t", "description": "行位置（0=第1行，1=第2行）"},
+          {"name": "col", "type": "uint8_t", "description": "列位置（0-15）"}
+        ]
+      },
+      {
+        "name": "jhd2004a_backlight_control",
+        "return_type": "jhd2004a_status_t",
+        "parameters": [
+          {"name": "on", "type": "bool", "description": "背光控制（true=开启，false=关闭）"}
+        ]
+      },
+      {
+        "name": "jhd2004a_cursor_blink",
+        "return_type": "jhd2004a_status_t",
+        "parameters": [
+          {"name": "enable", "type": "bool", "description": "光标闪烁控制（true=启用，false=禁用）"}
+        ]
+      },
+      {
+        "name": "jhd2004a_define_custom_char",
+        "return_type": "jhd2004a_status_t",
+        "parameters": [
+          {"name": "location", "type": "uint8_t", "description": "自定义字符位置（0-7）"},
+          {"name": "char_data", "type": "const uint8_t[8]", "description": "5x8点阵数据（8字节，每字节对应一行）"}
+        ]
+      }
+    ],
+    "data_types": {
+    "jhd2004a_display_buffer_t": {
+      "rows": "uint8_t[2]",
+      "cols": "uint8_t[16]"
+    },
+    "jhd2004a_cursor_param_t": {
+      "row": "uint8_t",
+      "col": "uint8_t"
+    }
+  },
+    "hardware_config": {
+    "default_i2c_port": "I2C_NUM_0",
+    "default_i2c_addr": "0x27",
+    "default_i2c_clk_hz": 100000,
+    "default_backlight": true,
+    "max_rows": 2,
+    "max_cols": 16,
+    "char_matrix": "5x8",
+    "active_level": "HIGH"
+  },
+    "error_handling": {
+    "retry_count": 3,
+    "timeout_threshold_ms": 200
+  },
+    "note": "JHD2004A为I2C接口1602字符液晶显示屏模块，支持2行16字符显示（5x8点阵字符），通过I2C协议与ESP32-S3通信。支持字符串显示、单字符显示、光标定位、背光控制、光标闪烁及自定义字符定义功能。初始化需配置I2C参数及背光状态，显示内容通过I2C发送指令和ASCII码实现。模块兼容标准HD44780控制器，适用于嵌入式系统信息展示场景。"
+  }
+}

@@ -1,0 +1,109 @@
+{
+  "FBG100_Interface": {
+    "status_enum": {
+      "fbg_100_status_t": [
+        "FBG_100_OK",
+        "FBG_100_ERROR_I2C",
+        "FBG_100_ERROR_TIMEOUT",
+        "FBG_100_ERROR_INVALID_DATA",
+        "FBG_100_ERROR_NOT_INITIALIZED",
+        "FBG_100_ERROR_CALIBRATION_FAIL",
+        "FBG_100_ERROR_OVER_TEMPERATURE",
+        "FBG_100_ERROR_UNDER_TEMPERATURE"
+      ]
+    },
+    "functions": [
+      {
+        "name": "fbg_100_init",
+        "return_type": "fbg_100_status_t",
+        "parameters": [
+          {"name": "i2c_port", "type": "i2c_port_t", "description": "I2C端口号（如I2C_NUM_0）"},
+          {"name": "i2c_addr", "type": "uint8_t", "description": "I2C设备地址（0x68/0x69，默认0x68）"},
+          {"name": "i2c_clk_hz", "type": "uint32_t", "description": "I2C时钟频率（单位：Hz，默认400000）"},
+          {"name": "power_pin", "type": "int8_t", "description": "电源控制引脚（-1=禁用，默认-1）"},
+          {"name": "reset_pin", "type": "int8_t", "description": "复位引脚（-1=禁用，默认-1）"}
+        ]
+      },
+      {
+        "name": "fbg_100_read_temperature",
+        "return_type": "fbg_100_status_t",
+        "parameters": [
+          {"name": "temperature_c", "type": "float*", "description": "输出参数（温度值，单位：°C）"}
+        ]
+      },
+      {
+        "name": "fbg_100_read_raw",
+        "return_type": "fbg_100_status_t",
+        "parameters": [
+          {"name": "raw_data", "type": "uint32_t*", "description": "输出参数（16位原始波长计数）"}
+        ]
+      },
+      {
+        "name": "fbg_100_set_integration_time",
+        "return_type": "fbg_100_status_t",
+        "parameters": [
+          {"name": "time_ms", "type": "uint16_t", "description": "积分时间（单位：ms，可选值：10/20/50/100/200）"}
+        ]
+      },
+      {
+        "name": "fbg_100_set_operating_mode",
+        "return_type": "fbg_100_status_t",
+        "parameters": [
+          {"name": "mode", "type": "uint8_t", "description": "工作模式（0=连续测量，1=单次测量后休眠）"}
+        ]
+      },
+      {
+        "name": "fbg_100_calibrate",
+        "return_type": "fbg_100_status_t",
+        "parameters": [
+          {"name": "ref_temp_c", "type": "float", "description": "参考温度值（单位：°C）"},
+          {"name": "ref_raw", "type": "uint32_t", "description": "参考温度对应的原始波长计数"}
+        ]
+      },
+      {
+        "name": "fbg_100_soft_reset",
+        "return_type": "fbg_100_status_t",
+        "parameters": []
+      },
+      {
+        "name": "fbg_100_power_on",
+        "return_type": "fbg_100_status_t",
+        "parameters": []
+      },
+      {
+        "name": "fbg_100_power_off",
+        "return_type": "fbg_100_status_t",
+        "parameters": []
+      }
+    ],
+    "data_types": {
+      "fbg_100_raw_data_t": {
+        "raw_wavelength": "uint32_t"  
+      },
+      "fbg_100_calib_param_t": {
+        "ref_temp_c": "float",        
+        "ref_raw": "uint32_t",        
+        "slope": "float"              
+      }
+    },
+    "hardware_config": {
+      "default_i2c_port": "I2C_NUM_0",  
+      "default_i2c_addr": "0x68",       
+      "default_i2c_clk_hz": 400000,   
+      "default_integration_time": 10, 
+      "default_operating_mode": 0,    
+      "power_pin": -1,                
+      "reset_pin": -1,                
+      "temp_range_degc": {            
+        "min": -40,
+        "max": 150
+      },
+      "base_resolution_degc": 0.1     
+    },
+    "error_handling": {
+      "retry_count": 3,               
+      "timeout_threshold_ms": 200     
+    },
+    "note": "FBG-100为光纤布拉格光栅（FBG）温度传感器，通过I2C接口（0x68/0x69）输出波长计数数据。测量范围-40°C~150°C，核心原理为光纤光栅波长随温度变化的特性。原始数据为16位波长计数（单位：计数），需通过校准参数（ref_temp_c/ref_raw/slope）转换为实际温度（temperature_c = (raw_wavelength - ref_raw) * slope + ref_temp_c）。支持积分时间调节（10ms~200ms）和连续/单次测量模式，校准需使用已知参考温度点修正非线性误差。"
+  }
+}

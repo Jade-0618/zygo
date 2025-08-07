@@ -1,0 +1,110 @@
+{
+  "AMG8833_Interface": {
+    "status_enum": {
+      "amg8833_status_t": [
+        "AMG8833_OK",
+        "AMG8833_ERROR_I2C",
+        "AMG8833_ERROR_TIMEOUT",
+        "AMG8833_ERROR_INVALID_DATA",
+        "AMG8833_ERROR_NOT_INITIALIZED",
+        "AMG8833_ERROR_OVER_TEMPERATURE",
+        "AMG8833_ERROR_UNDER_TEMPERATURE",
+        "AMG8833_ERROR_RETRIES_EXHAUSTED"
+      ]
+    },
+    "functions": [
+      {
+        "name": "amg8833_init",
+        "return_type": "amg8833_status_t",
+        "parameters": [
+          {"name": "i2c_port", "type": "i2c_port_t", "description": "I2C端口号（如I2C_NUM_0）"},
+          {"name": "i2c_addr", "type": "uint8_t", "description": "I2C设备地址（0x68/0x69，默认0x68）"},
+          {"name": "i2c_clk_hz", "type": "uint32_t", "description": "I2C时钟频率（单位：Hz，默认400000）"},
+          {"name": "power_pin", "type": "int8_t", "description": "电源控制引脚（-1=禁用，默认-1）"},
+          {"name": "reset_pin", "type": "int8_t", "description": "复位引脚（-1=禁用，默认-1）"}
+        ]
+      },
+      {
+        "name": "amg8833_read_pixel_temperature",
+        "return_type": "amg8833_status_t",
+        "parameters": [
+          {"name": "pixels", "type": "float[64]*", "description": "输出参数（8x8像素温度值，单位：°C）"}
+        ]
+      },
+      {
+        "name": "amg8833_read_raw_data",
+        "return_type": "amg8833_status_t",
+        "parameters": [
+          {"name": "raw_data", "type": "uint16_t[64]*", "description": "输出参数（8x8原始像素数据）"}
+        ]
+      },
+      {
+        "name": "amg8833_set_integration_time",
+        "return_type": "amg8833_status_t",
+        "parameters": [
+          {"name": "time_ms", "type": "uint8_t", "description": "积分时间（单位：ms，可选值：10/20/40/80/160/320/640/1280）"}
+        ]
+      },
+      {
+        "name": "amg8833_set_repetition_mode",
+        "return_type": "amg8833_status_t",
+        "parameters": [
+          {"name": "mode", "type": "uint8_t", "description": "重采样模式（0=禁用，1=2×2平均，2=4×4平均）"}
+        ]
+      },
+      {
+        "name": "amg8833_set_offset",
+        "return_type": "amg8833_status_t",
+        "parameters": [
+          {"name": "offset_x", "type": "int8_t", "description": "X轴偏移量（-16~15）"},
+          {"name": "offset_y", "type": "int8_t", "description": "Y轴偏移量（-16~15）"}
+        ]
+      },
+      {
+        "name": "amg8833_soft_reset",
+        "return_type": "amg8833_status_t",
+        "parameters": []
+      },
+      {
+        "name": "amg8833_enter_sleep",
+        "return_type": "amg8833_status_t",
+        "parameters": []
+      },
+      {
+        "name": "amg8833_wake_up",
+        "return_type": "amg8833_status_t",
+        "parameters": []
+      }
+    ],
+    "data_types": {
+      "amg8833_raw_data_t": {
+        "raw_pixels": "uint16_t[64]"  
+      },
+      "amg8833_calib_param_t": {
+        "offset_x": "int8_t",        
+        "offset_y": "int8_t",        
+        "temp_offset": "float"       
+      }
+    },
+    "hardware_config": {
+      "default_i2c_port": "I2C_NUM_0",  
+      "default_i2c_addr": "0x68",       
+      "default_i2c_clk_hz": 400000,   
+      "default_integration_time": 10, 
+      "default_repetition_mode": 0,   
+      "power_pin": -1,                
+      "reset_pin": -1,                
+      "temp_range_degc": {            
+        "min": -40,
+        "max": 85
+      },
+      "pixel_count": 64,              
+      "base_resolution_degc": 0.1     
+    },
+    "error_handling": {
+      "retry_count": 3,               
+      "timeout_threshold_ms": 200     
+    },
+    "note": "AMG8833为8x8像素红外热像仪，基于微测辐射热计技术，通过I2C接口（0x68/0x69）输出像素级温度数据。测量范围-40°C~85°C，基础分辨率0.1°C/LSB，支持积分时间调节（10ms~1280ms）和2×2/4×4重采样模式。初始化需配置I2C参数，读取数据时通过0x80~0xBF寄存器获取原始像素值（需转换为温度：temperature_c = raw_value * 0.1 + offset）。校准通过offset_x/offset_y参数修正像素偏移误差，全局偏移通过temp_offset调整。"
+  }
+}

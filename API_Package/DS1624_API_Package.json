@@ -1,0 +1,102 @@
+{
+  "DS1624_Interface": {
+    "status_enum": {
+      "ds1624_status_t": [
+        "DS1624_OK",
+        "DS1624_ERROR_I2C_TIMEOUT",
+        "DS1624_ERROR_I2C_NACK",
+        "DS1624_ERROR_INVALID_DATA",
+        "DS1624_ERROR_NOT_INITIALIZED",
+        "DS1624_ERROR_RESOLUTION_UNSUPPORTED"
+      ]
+    },
+    "functions": [
+      {
+        "name": "ds1624_init",
+        "return_type": "ds1624_status_t",
+        "parameters": [
+          {"name": "i2c_port", "type": "i2c_port_t", "description": "I2C端口号（如I2C_NUM_0）"},
+          {"name": "i2c_addr", "type": "uint8_t", "description": "I2C设备地址（0x48-0x4F，由A0-A2引脚配置）"},
+          {"name": "i2c_clk_hz", "type": "uint32_t", "description": "I2C时钟频率（单位：Hz，默认100000）"}
+        ]
+      },
+      {
+        "name": "ds1624_read_temperature",
+        "return_type": "ds1624_status_t",
+        "parameters": [
+          {"name": "temperature_c", "type": "float*", "description": "输出参数（温度值，单位：°C）"}
+        ]
+      },
+      {
+        "name": "ds1624_write_config",
+        "return_type": "ds1624_status_t",
+        "parameters": [
+          {"name": "resolution_bits", "type": "uint8_t", "description": "温度分辨率（0x09=9位, 0x0A=10位, 0x0B=11位, 0x0C=12位）"},
+          {"name": "stop_conversion", "type": "bool", "description": "是否停止当前转换（true=停止，false=保持运行）"}
+        ]
+      },
+      {
+        "name": "ds1624_read_config",
+        "return_type": "ds1624_status_t",
+        "parameters": [
+          {"name": "config_reg", "type": "uint8_t*", "description": "输出参数（配置寄存器值）"}
+        ]
+      },
+      {
+        "name": "ds1624_set_tos",
+        "return_type": "ds1624_status_t",
+        "parameters": [
+          {"name": "tos_degc", "type": "float", "description": "温度上限阈值（单位：°C，范围-55°C~125°C）"}
+        ]
+      },
+      {
+        "name": "ds1624_set_thyst",
+        "return_type": "ds1624_status_t",
+        "parameters": [
+          {"name": "thyst_degc", "type": "float", "description": "温度下限阈值（单位：°C，范围-55°C~125°C）"}
+        ]
+      },
+      {
+        "name": "ds1624_start_conversion",
+        "return_type": "ds1624_status_t",
+        "parameters": []
+      },
+      {
+        "name": "ds1624_stop_conversion",
+        "return_type": "ds1624_status_t",
+        "parameters": []
+      }
+    ],
+    "data_types": {
+      "ds1624_raw_data_t": {
+        "raw_temp": "int16_t"  
+      },
+      "ds1624_config_reg_t": {
+        "resolution": "uint8_t",  
+        "stop_conv": "bool",      
+        "alarm_mode": "bool"     
+      }
+    },
+    "hardware_config": {
+      "default_i2c_port": 0,
+      "default_i2c_addr": "0x48",
+      "default_i2c_clk_hz": 100000,   
+      "conversion_time_ms": {         
+        "9bit": 93,
+        "10bit": 187,
+        "11bit": 375,
+        "12bit": 750
+      },
+      "default_resolution": "0x0C",
+      "temp_range_degc": {            
+        "min": -55,
+        "max": 125
+      }
+    },
+    "error_handling": {
+      "retry_count": 3,              
+      "timeout_threshold_ms": 1000    
+    },
+    "note": "DS1624为I2C接口数字温度传感器，支持9-12位可编程分辨率（0.5°C~0.0625°C），内置非易失性温度警报寄存器（TOS/THYST）。通过I2C协议与ESP32-S3通信：主机发送起始信号→发送设备地址+写位→写入命令/配置→重启信号→读取温度数据。温度计算公式：temperature_c = (raw_temp >> 4) * 0.0625（12位分辨率时）。警报触发条件：温度超过TOS（上限）或低于THYST（下限），可通过set_tos/set_thyst配置阈值。"
+  }
+}

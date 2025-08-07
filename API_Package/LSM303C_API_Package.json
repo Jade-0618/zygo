@@ -1,0 +1,281 @@
+{
+  "LSM303C_Interface": {
+    "status_enum": {
+      "lsm303c_status_t": [
+        "LSM303C_OK",
+        "LSM303C_ERROR_I2C",
+        "LSM303C_ERROR_SPI",
+        "LSM303C_ERROR_TIMEOUT",
+        "LSM303C_ERROR_INVALID_PARAM",
+        "LSM303C_ERROR_NOT_INITIALIZED",
+        "LSM303C_ERROR_CALIBRATION_IN_PROGRESS",
+        "LSM303C_ERROR_SENSOR_NOT_RESPONDING"
+      ]
+    },
+    "functions": [
+      {
+        "name": "lsm303c_init",
+        "description": "初始化传感器并配置通信接口",
+        "return_type": "lsm303c_status_t",
+        "parameters": [
+          {
+            "name": "comm_mode",
+            "type": "lsm303c_comm_mode_t",
+            "description": "通信模式（I2C_MODE/SPI_MODE）"
+          },
+          {
+            "name": "i2c_port",
+            "type": "uint8_t",
+            "description": "I2C端口号（仅I2C_MODE有效，如I2C_NUM_0）"
+          },
+          {
+            "name": "sda_pin",
+            "type": "uint8_t",
+            "description": "I2C数据引脚编号（仅I2C_MODE有效，如GPIO21）"
+          },
+          {
+            "name": "scl_pin",
+            "type": "uint8_t",
+            "description": "I2C时钟引脚编号（仅I2C_MODE有效，如GPIO22）"
+          },
+          {
+            "name": "spi_cs_pin",
+            "type": "uint8_t",
+            "description": "SPI片选引脚编号（仅SPI_MODE有效，如GPIO18）"
+          },
+          {
+            "name": "addr_pin_state",
+            "type": "bool",
+            "description": "ADDR引脚电平状态（true=高电平，false=低电平，默认0x19）"
+          },
+          {
+            "name": "interrupt_pin",
+            "type": "int8_t",
+            "description": "中断引脚编号（-1=禁用，如GPIO24）"
+          }
+        ]
+      },
+      {
+        "name": "lsm303c_set_operation_mode",
+        "description": "设置传感器工作模式（决定可用传感器数据）",
+        "return_type": "lsm303c_status_t",
+        "parameters": [
+          {
+            "name": "mode",
+            "type": "lsm303c_operation_mode_t",
+            "description": "操作模式枚举值（如ACCOFF_MAGONLY/ACCONLY_MAGOFF等）"
+          }
+        ]
+      },
+      {
+        "name": "lsm303c_read_acceleration",
+        "description": "读取三轴加速度数据",
+        "return_type": "lsm303c_status_t",
+        "parameters": [
+          {
+            "name": "x",
+            "type": "int16_t*",
+            "description": "输出参数（X轴加速度原始值，单位：LSB）"
+          },
+          {
+            "name": "y",
+            "type": "int16_t*",
+            "description": "输出参数（Y轴加速度原始值，单位：LSB）"
+          },
+          {
+            "name": "z",
+            "type": "int16_t*",
+            "description": "输出参数（Z轴加速度原始值，单位：LSB）"
+          }
+        ]
+      },
+      {
+        "name": "lsm303c_read_magnetometer",
+        "description": "读取三轴磁场数据",
+        "return_type": "lsm303c_status_t",
+        "parameters": [
+          {
+            "name": "x",
+            "type": "int16_t*",
+            "description": "输出参数（X轴磁场原始值，单位：LSB）"
+          },
+          {
+            "name": "y",
+            "type": "int16_t*",
+            "description": "输出参数（Y轴磁场原始值，单位：LSB）"
+          },
+          {
+            "name": "z",
+            "type": "int16_t*",
+            "description": "输出参数（Z轴磁场原始值，单位：LSB）"
+          }
+        ]
+      },
+      {
+        "name": "lsm303c_read_acceleration_mps2",
+        "description": "读取三轴加速度数据（单位：m/s²）",
+        "return_type": "lsm303c_status_t",
+        "parameters": [
+          {
+            "name": "x",
+            "type": "float*",
+            "description": "输出参数（X轴加速度，单位：m/s²）"
+          },
+          {
+            "name": "y",
+            "type": "float*",
+            "description": "输出参数（Y轴加速度，单位：m/s²）"
+          },
+          {
+            "name": "z",
+            "type": "float*",
+            "description": "输出参数（Z轴加速度，单位：m/s²）"
+          }
+        ]
+      },
+      {
+        "name": "lsm303c_read_magnetometer_ microtesla",
+        "description": "读取三轴磁场数据（单位：μT）",
+        "return_type": "lsm303c_status_t",
+        "parameters": [
+          {
+            "name": "x",
+            "type": "float*",
+            "description": "输出参数（X轴磁场，单位：μT）"
+          },
+          {
+            "name": "y",
+            "type": "float*",
+            "description": "输出参数（Y轴磁场，单位：μT）"
+          },
+          {
+            "name": "z",
+            "type": "float*",
+            "description": "输出参数（Z轴磁场，单位：μT）"
+          }
+        ]
+      },
+      {
+        "name": "lsm303c_set_accel_range",
+        "description": "设置加速度计量程",
+        "return_type": "lsm303c_status_t",
+        "parameters": [
+          {
+            "name": "range",
+            "type": "lsm303c_accel_range_t",
+            "description": "加速度计量程（±2G/±4G/±8G/±16G）"
+          }
+        ]
+      },
+      {
+        "name": "lsm303c_set_mag_range",
+        "description": "设置磁力计量程",
+        "return_type": "lsm303c_status_t",
+        "parameters": [
+          {
+            "name": "range",
+            "type": "lsm303c_mag_range_t",
+            "description": "磁力计量程（±16G/±32G）"
+          }
+        ]
+      },
+      {
+        "name": "lsm303c_set_odr",
+        "description": "设置输出数据率",
+        "return_type": "lsm303c_status_t",
+        "parameters": [
+          {
+            "name": "odr",
+            "type": "lsm303c_odr_t",
+            "description": "输出数据率（1Hz/10Hz/25Hz/50Hz/100Hz/200Hz/400Hz/1000Hz）"
+          }
+        ]
+      },
+      {
+        "name": "lsm303c_calibrate",
+        "description": "启动传感器校准（需用户保持传感器静止）",
+        "return_type": "lsm303c_status_t",
+        "parameters": []
+      },
+      {
+        "name": "lsm303c_get_calibration_status",
+        "description": "获取校准状态（0-3表示各传感器校准进度）",
+        "return_type": "uint8_t",
+        "parameters": []
+      },
+      {
+        "name": "lsm303c_soft_reset",
+        "description": "软件复位传感器（恢复默认配置）",
+        "return_type": "lsm303c_status_t",
+        "parameters": []
+      },
+      {
+        "name": "lsm303c_power_down",
+        "description": "进入低功耗模式（停止所有测量）",
+        "return_type": "lsm303c_status_t",
+        "parameters": []
+      }
+    ],
+    "data_types": {
+      "lsm303c_comm_mode_t": [
+        "LSM303C_I2C_MODE",
+        "LSM303C_SPI_MODE"
+      ],
+      "lsm303c_operation_mode_t": [
+        "LSM303C_ACCOFF_MAGONLY",
+        "LSM303C_ACCONLY_MAGOFF",
+        "LSM303C_ACC_MAG"
+      ],
+      "lsm303c_accel_range_t": [
+        "LSM303C_ACCEL_RANGE_2G",
+        "LSM303C_ACCEL_RANGE_4G",
+        "LSM303C_ACCEL_RANGE_8G",
+        "LSM303C_ACCEL_RANGE_16G"
+      ],
+      "lsm303c_mag_range_t": [
+        "LSM303C_MAG_RANGE_16G",
+        "LSM303C_MAG_RANGE_32G"
+      ],
+      "lsm303c_odr_t": [
+        "LSM303C_ODR_1HZ",
+        "LSM303C_ODR_10HZ",
+        "LSM303C_ODR_25HZ",
+        "LSM303C_ODR_50HZ",
+        "LSM303C_ODR_100HZ",
+        "LSM303C_ODR_200HZ",
+        "LSM303C_ODR_400HZ",
+        "LSM303C_ODR_1000HZ"
+      ],
+      "lsm303c_raw_data_t": {
+        "accel_x_raw": "int16_t",
+        "accel_y_raw": "int16_t",
+        "accel_z_raw": "int16_t",
+        "mag_x_raw": "int16_t",
+        "mag_y_raw": "int16_t",
+        "mag_z_raw": "int16_t"
+      },
+      "lsm303c_calib_param_t": {
+        "accel_offset": "int16_t[3]",
+        "mag_offset": "int16_t[3]",
+        "mag_radius": "uint16_t"
+      }
+    },
+    "hardware_config": {
+      "comm_mode": "LSM303C_I2C_MODE",
+      "i2c_port": 0,
+      "sda_pin": 21,
+      "scl_pin": 22,
+      "i2c_addr":"0x19",
+      "spi_cs_pin": 18,
+      "interrupt_pin": 24,
+      "default_operation_mode": "LSM303C_ACC_MAG",
+      "default_accel_range": "LSM303C_ACCEL_RANGE_2G",
+      "default_mag_range": "LSM303C_MAG_RANGE_16G",
+      "default_odr": "LSM303C_ODR_100HZ"
+    },
+    "error_handling": {
+      "retry_count": 3,
+      "timeout_threshold": 200
+    }
+  }
+}

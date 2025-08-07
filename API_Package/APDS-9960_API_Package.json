@@ -1,0 +1,218 @@
+{
+  "APDS9960_Interface": {
+    "status_enum": {
+      "apds9960_status_t": [
+        "APDS9960_OK",
+        "APDS9960_ERROR_I2C",
+        "APDS9960_ERROR_SPI",
+        "APDS9960_ERROR_REG_READ",
+        "APDS9960_ERROR_REG_WRITE",
+        "APDS9960_ERROR_TIMEOUT",
+        "APDS9960_ERROR_INVALID_PARAM",
+        "APDS9960_ERROR_GESTURE_NOT_READY"
+      ]
+    },
+    "functions": [
+      {
+        "name": "apds9960_init",
+        "return_type": "apds9960_status_t",
+        "parameters": [
+          {
+            "name": "comm_mode",
+            "type": "apds9960_comm_mode_t",
+            "description": "通信模式（I2C_MODE/SPI_MODE）"
+          },
+          {
+            "name": "i2c_port",
+            "type": "uint8_t",
+            "description": "I2C端口号（仅I2C_MODE有效，如I2C_NUM_0）"
+          },
+          {
+            "name": "sda_pin",
+            "type": "uint8_t",
+            "description": "I2C数据引脚编号（仅I2C_MODE有效，如GPIO21）"
+          },
+          {
+            "name": "scl_pin",
+            "type": "uint8_t",
+            "description": "I2C时钟引脚编号（仅I2C_MODE有效，如GPIO22）"
+          },
+          {
+            "name": "i2c_addr",
+            "type": "uint8_t",
+            "description": "I2C设备地址（0x39=ADDR引脚高电平，0x29=低电平，仅I2C_MODE有效）"
+          },
+          {
+            "name": "spi_cs_pin",
+            "type": "uint8_t",
+            "description": "SPI片选引脚编号（仅SPI_MODE有效，如GPIO18）"
+          },
+          {
+            "name": "interrupt_pin",
+            "type": "int8_t",
+            "description": "中断引脚编号（-1=禁用，如GPIO13）"
+          }
+        ]
+      },
+      {
+        "name": "apds9960_set_power_mode",
+        "return_type": "apds9960_status_t",
+        "parameters": [
+          {
+            "name": "mode",
+            "type": "apds9960_power_mode_t",
+            "description": "工作模式（POWER_OFF/AMBIENT_LIGHT/PROXIMITY/GESTURE）"
+          }
+        ]
+      },
+      {
+        "name": "apds9960_set_gain",
+        "return_type": "apds9960_status_t",
+        "parameters": [
+          {
+            "name": "gain",
+            "type": "apds9960_gain_t",
+            "description": "环境光/接近增益（1X/2X/4X/8X/16X/32X/64X/128X）"
+          }
+        ]
+      },
+      {
+        "name": "apds9960_set_integration_time",
+        "return_type": "apds9960_status_t",
+        "parameters": [
+          {
+            "name": "time",
+            "type": "apds9960_integration_time_t",
+            "description": "积分时间（100MS/200MS/300MS/400MS）"
+          }
+        ]
+      },
+      {
+        "name": "apds9960_read_ambient_light",
+        "return_type": "apds9960_status_t",
+        "parameters": [
+          {
+            "name": "lux",
+            "type": "float*",
+            "description": "输出参数（环境光照度，单位：勒克斯）"
+          }
+        ]
+      },
+      {
+        "name": "apds9960_read_proximity",
+        "return_type": "apds9960_status_t",
+        "parameters": [
+          {
+            "name": "distance",
+            "type": "uint8_t*",
+            "description": "输出参数（接近距离，0-255，值越大越近）"
+          }
+        ]
+      },
+      {
+        "name": "apds9960_set_gesture_threshold",
+        "return_type": "apds9960_status_t",
+        "parameters": [
+          {
+            "name": "up",
+            "type": "uint8_t",
+            "description": "向上手势检测阈值（0-255）"
+          },
+          {
+            "name": "down",
+            "type": "uint8_t",
+            "description": "向下手势检测阈值（0-255）"
+          },
+          {
+            "name": "left",
+            "type": "uint8_t",
+            "description": "向左手势检测阈值（0-255）"
+          },
+          {
+            "name": "right",
+            "type": "uint8_t",
+            "description": "向右手势检测阈值（0-255）"
+          }
+        ]
+      },
+      {
+        "name": "apds9960_read_gesture",
+        "return_type": "apds9960_status_t",
+        "parameters": [
+          {
+            "name": "gesture",
+            "type": "apds9960_gesture_t*",
+            "description": "输出参数（检测到的手势：UP/DOWN/LEFT/RIGHT/NONE）"
+          }
+        ]
+      },
+      {
+        "name": "apds9960_soft_reset",
+        "return_type": "apds9960_status_t",
+        "parameters": []
+      },
+      {
+        "name": "apds9960_get_interrupt_status",
+        "return_type": "bool",
+        "parameters": [],
+        "description": "获取中断引脚状态（true=中断触发）"
+      }
+    ],
+    "data_types": {
+      "apds9960_comm_mode_t": [
+        "APDS9960_I2C_MODE",
+        "APDS9960_SPI_MODE"
+      ],
+      "apds9960_power_mode_t": [
+        "APDS9960_POWER_OFF",
+        "APDS9960_AMBIENT_LIGHT",
+        "APDS9960_PROXIMITY",
+        "APDS9960_GESTURE"
+      ],
+      "apds9960_gain_t": [
+        "APDS9960_GAIN_1X",
+        "APDS9960_GAIN_2X",
+        "APDS9960_GAIN_4X",
+        "APDS9960_GAIN_8X",
+        "APDS9960_GAIN_16X",
+        "APDS9960_GAIN_32X",
+        "APDS9960_GAIN_64X",
+        "APDS9960_GAIN_128X"
+      ],
+      "apds9960_integration_time_t": [
+        "APDS9960_INTEGRATION_TIME_100MS",
+        "APDS9960_INTEGRATION_TIME_200MS",
+        "APDS9960_INTEGRATION_TIME_300MS",
+        "APDS9960_INTEGRATION_TIME_400MS"
+      ],
+      "apds9960_gesture_t": [
+        "APDS9960_GESTURE_NONE",
+        "APDS9960_GESTURE_UP",
+        "APDS9960_GESTURE_DOWN",
+        "APDS9960_GESTURE_LEFT",
+        "APDS9960_GESTURE_RIGHT"
+      ],
+      "apds9960_raw_data_t": {
+        "ambient_light_raw": "uint16_t",  
+        "proximity_raw": "uint8_t"        
+      }
+    },
+    "hardware_config": {
+      "comm_mode": "APDS9960_I2C_MODE",
+      "i2c_port": 0,
+      "sda_pin": 21,
+      "scl_pin": 22,
+      "i2c_addr": "0x39",
+      "spi_cs_pin": 18,
+      "interrupt_pin": 13,
+      "default_gain": "APDS9960_GAIN_1X",
+      "default_integration_time": "APDS9960_INTEGRATION_TIME_100MS",
+      "default_power_mode": "APDS9960_AMBIENT_LIGHT"
+    },
+    "error_handling": {
+      "retry_count": 3,
+      "timeout_threshold": 100
+    },
+    "calibration_note": "APDS-9960出厂时已完成基础校准，环境光测量需根据实际光照强度调整增益和积分时间；接近检测需通过set_gesture_threshold设置动态阈值以适应不同反射率物体；手势识别依赖内置算法，用户仅需配置阈值和启用手势模式。"
+  }
+}

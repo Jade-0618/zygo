@@ -1,0 +1,2829 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zygo AI IDE v6.2</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        /* [保留所有您之前的 :root, *, html/body, button, input 等基础样式] */
+        :root {
+            --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+            --bg-base: #12121c;
+            --bg-surface: #1a1a28;
+            --bg-surface-hover: #242435;
+            --bg-glass: rgba(26, 26, 40, 0.6);
+            --border-color: rgba(128, 128, 160, 0.2);
+            --text-primary: #e0e0ff;
+            --text-secondary: #9090b0;
+            --accent-primary: #6a5acd;
+            --accent-primary-glow: rgba(106, 90, 205, 0.5);
+            --accent-success: #28a745;
+            --accent-error: #dc3545;
+            --accent-warn: #ffc107;
+            --scrollbar-thumb: #3a3a5a;
+            --scrollbar-thumb-hover: #4a4a6a;
+        }
+
+        .status-actions-container {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--accent-primary);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 0 20px -5px var(--accent-primary-glow);
+        }
+        .status-actions-container p {
+            font-weight: 500;
+            font-size: 1.1em;
+        }
+        .status-actions-container .actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        html[data-theme='light'] {
+            --bg-base: #f4f5fa;
+            --bg-surface: #ffffff;
+            --bg-surface-hover: #eef0f6;
+            --bg-glass: rgba(255, 255, 255, 0.6);
+            --border-color: rgba(0, 0, 0, 0.1);
+            --text-primary: #12121c;
+            --text-secondary: #5a5a72;
+            --scrollbar-thumb: #c1c1c1;
+            --scrollbar-thumb-hover: #a8a8a8;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body {
+            height: 100vh; width: 100vw; overflow: hidden;
+            background-color: var(--bg-base); color: var(--text-primary);
+            font-family: var(--font-family); font-size: 14px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb {
+            background-color: var(--scrollbar-thumb);
+            border-radius: 4px; border: 2px solid transparent;
+            background-clip: content-box;
+        }
+        ::-webkit-scrollbar-thumb:hover { background-color: var(--scrollbar-thumb-hover); }
+        button, input, select, textarea {
+            font-family: inherit; color: inherit; background-color: var(--bg-surface);
+            border: 1px solid var(--border-color); border-radius: 6px;
+            padding: 8px 12px; font-size: 1em; transition: all 0.2s ease;
+        }
+        button {
+            cursor: pointer; background-color: var(--accent-primary);
+            border-color: var(--accent-primary); color: white; font-weight: 500;
+            box-shadow: 0 0 15px 0 rgba(0,0,0,0.2);
+        }
+        button:hover:not(:disabled) {
+            background-color: #7b68ee;
+            box-shadow: 0 0 20px -5px var(--accent-primary-glow);
+        }
+        button:disabled { background-color: var(--text-secondary); cursor: not-allowed; opacity: 0.7; }
+        input:focus, textarea:focus, select:focus {
+            outline: none; border-color: var(--accent-primary);
+            box-shadow: 0 0 15px -5px var(--accent-primary-glow);
+        }
+        button.secondary { background-color: var(--bg-surface-hover); border-color: var(--border-color); color: var(--text-primary); }
+        .ide-container { display: flex; height: 100vh; }
+        #activity-bar {
+            width: 55px; background-color: var(--bg-base);
+            border-right: 1px solid var(--border-color); padding: 10px 0;
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: space-between; flex-shrink: 0;
+        }
+        .activity-group { display: flex; flex-direction: column; align-items: center; gap: 15px; }
+        .activity-btn {
+            width: 40px; height: 40px; display: flex; justify-content: center; align-items: center;
+            border-radius: 8px; cursor: pointer; transition: background-color 0.2s ease;
+            border: none; background: none; padding: 0;
+        }
+        .activity-btn svg { width: 24px; height: 24px; stroke: var(--text-secondary); transition: all 0.2s ease; }
+        .activity-btn:hover { background-color: var(--bg-surface-hover); }
+        .activity-btn.active { background-color: var(--accent-primary); }
+        .activity-btn.active svg { stroke: white; }
+        .content-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        /* 修改主视图以适应问题面板 */
+        #main-view {
+            flex-grow: 1;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            overflow: hidden; /* 防止内容溢出 */
+        }
+
+        /* [新增] 优化问题面板布局的样式 (增强版 v2) */
+        #problems-panel-content {
+            padding: 5px 10px; /* 减小面板的整体内边距 */
+        }
+        #problems-panel-content h4 {
+            margin: 2px 0 4px; /* 进一步减小标题的垂直外边距 */
+            font-size: 0.9em;
+            padding-bottom: 3px;
+            font-family: var(--font-family);
+            font-weight: 500;
+            border-bottom: 1px solid var(--border-color);
+        }
+        #problems-panel-content ul {
+            list-style: none;
+            padding: 0;
+            margin: 0; /* 移除列表的上边距 */
+        }
+        #problems-panel-content li {
+            padding: 2px 4px; /* 维持列表项的最小垂直内边距 */
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex; /* 核心修改：使用 Flex 布局 */
+            align-items: baseline; /* 基线对齐，文本看起来更整齐 */
+            gap: 8px; /* 在项目之间创建间隙 */
+            white-space: nowrap; /* 防止子元素内部换行 */
+        }
+        #problems-panel-content li > span:nth-child(3) {
+            white-space: normal; /* 允许错误消息本身换行 */
+            word-break: break-all;
+        }
+
+        .view {
+            display: none;
+            flex-grow: 1;
+            flex-direction: column; /* 确保视图内部也是flex列布局 */
+        }
+        .view.active {
+            display: flex;
+        }
+        #status-bar {
+            height: 32px; background-color: var(--bg-surface);
+            border-top: 1px solid var(--border-color); display: flex;
+            align-items: center; padding: 0 15px; gap: 20px;
+            font-size: 0.9em; color: var(--text-secondary); flex-shrink: 0;
+        }
+        .status-item { display: flex; align-items: center; gap: 6px; }
+        .status-item svg { width: 14px; height: 14px; stroke: var(--text-secondary); }
+        #status-user-actions { margin-left: auto; display: flex; align-items: center; gap: 15px; }
+        /* [最终修正] 默认状态：保持内容水平垂直居中 */
+        #view-ai-workflow {
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.4s ease, backdrop-filter 0.4s ease;
+        }
+        /* [最终修正] 新增状态：当工作流激活时，切换为从上到下、拉伸布局的日志模式 */
+        #view-ai-workflow.workflow-active {
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: stretch;
+        }
+        #status-problems .status-item {
+            opacity: 0.7;
+            transition: opacity 0.2s ease;
+        }
+
+        #status-problems .status-item:hover {
+            opacity: 1;
+        }
+
+        #status-problems .status-item.active {
+            opacity: 1;
+            text-decoration: underline;
+        }
+        #initial-prompt-container {
+            width: 100%;
+            height: 100%;
+            max-width: 900px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            gap: 20px;
+            position: relative;
+            /* 新增下面这一行 */
+            transition: height 0.4s ease;
+        }
+        #initial-prompt-container h1 { font-size: 2em; font-weight: 500; color: var(--text-primary); }
+        #initial-prompt-container p { color: var(--text-secondary); text-align: center; }
+        #raw-text-input { width: 100%; padding: 15px; font-size: 1.1em; background-color: var(--bg-surface); }
+        #initial-submit-button { padding: 12px 25px; font-size: 1.1em; }
+        #workflow-stream-container {
+            display: none; width: 100%; height: 100%; padding: 20px;
+            overflow-y: auto; font-family: var(--font-mono); font-size: 15px; line-height: 1.7;
+        }
+        .stream-entry { margin-bottom: 8px; }
+        .stream-entry .timestamp { color: var(--text-secondary); margin-right: 15px; }
+        .stream-entry .status-running { color: var(--accent-primary); font-weight: bold; }
+        .stream-entry .status-completed { color: var(--accent-success); font-weight: bold; }
+        .stream-entry .status-failed { color: var(--accent-error); font-weight: bold; }
+        .stream-entry .log-line { white-space: pre-wrap; word-break: break-all; }
+        .output-block {
+            border: 1px solid var(--border-color); border-radius: 8px;
+            margin-top: 10px; margin-bottom: 15px;
+            background-color: var(--bg-surface);
+            overflow: hidden;
+        }
+        .output-block-header {
+            font-weight: 500; color: var(--text-secondary);
+            padding: 8px 15px;
+            border-bottom: 1px solid var(--border-color);
+            background-color: rgba(0,0,0,0.1);
+        }
+        .output-block-content {
+            padding: 15px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            color: var(--text-primary);
+            max-height: 400px;
+            overflow-y: auto;
+            overflow-wrap: break-word;
+        }
+        .output-block-content pre, .output-block-content code {
+            margin: 0; padding: 0 !important; background: transparent !important;
+        }
+        #view-file-explorer { flex-direction: row; }
+
+        #editor-area-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0; /* 允许收缩 */
+            overflow: hidden;
+        }
+        /* 【新增】问题面板样式 */
+        #problems-panel {
+            flex-shrink: 0;
+            border-top: 1px solid var(--border-color);
+            background-color: var(--bg-surface);
+            display: none;
+            flex-direction: column;
+            width: 100%;
+            overflow: hidden;
+            min-height: 100px; /* 添加最小高度 */
+            height: 200px; /* 设置默认高度 */
+        }
+
+        /* 确保调节器可见且易于拖拽 */
+        #panel-resizer {
+            height: 1px;
+            background-color: var(--border-color);
+            cursor: ns-resize;
+            flex-shrink: 0;
+            display: none;
+            transition: background-color 0.2s ease;
+        }
+
+        #panel-resizer:hover {
+            background-color: var(--accent-primary);
+        }
+
+        #problems-panel-header {
+            padding: 5px 15px;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 500;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        /* 修改内容区域样式 */
+        #problems-panel-content {
+            overflow: auto;
+            flex-grow: 1;
+            padding: 10px;
+            font-family: var(--font-mono);
+            font-size: 0.9em;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            min-height: 0; /* 允许内容区域收缩 */
+        }
+
+        #status-problems .icon-error { stroke: var(--accent-error); }
+        #status-problems .icon-warning { stroke: var(--accent-warn); }
+        #status-problems .icon-info { stroke: var(--accent-primary); }
+        #file-tree-panel {
+            width: 280px; padding: 15px; border-right: 1px solid var(--border-color);
+            overflow-y: auto; flex-shrink: 0; display: flex; flex-direction: column;
+        }
+        #file-tree-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        #file-tree-header h3 { margin: 0; }
+        #file-tree-container { flex-grow: 1; overflow-y: auto; }
+        #code-editor-panel {
+            flex-grow: 1; /* 这是关键，让编辑器占据所有可用空间 */
+            display: flex;
+            flex-direction: column;
+        }
+        #code-editor-header { padding: 10px 15px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+        #code-editor-textarea {
+            flex-grow: 1; background-color: var(--bg-base); border: none; padding: 15px;
+            resize: none; font-family: var(--font-mono); font-size: 15px; line-height: 1.7;
+        }
+        #file-tree-container ul { list-style-type: none; padding-left: 15px; }
+        .tree-item { cursor: pointer; display: flex; align-items: center; padding: 4px 5px; border-radius: 4px; }
+        .tree-item:hover { background-color: var(--bg-surface-hover); }
+        .tree-item.active { background-color: var(--accent-primary); color: white; }
+        .tree-item .icon { margin-right: 8px; width: 16px; text-align: center; }
+        .folder .icon::before { content: '▶'; display: inline-block; transition: transform 0.1s; }
+        .folder.open > .tree-item .icon::before { transform: rotate(90deg); }
+        .file .icon::before { content: '📄'; }
+        .nested { display: none; }
+        .folder.open > .nested { display: block; }
+        #view-device-manager { padding: 20px; overflow-y: auto; }
+        .device-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+        .device-card {
+            background-color: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 8px;
+            padding: 15px; display: flex; flex-direction: column; gap: 10px; transition: all 0.2s ease;
+        }
+        .device-card:hover { border-color: var(--accent-primary); box-shadow: 0 0 15px -5px var(--accent-primary-glow); }
+        .device-card-header { display: flex; justify-content: space-between; align-items: center; }
+        .device-card-header h3 { font-size: 1.1em; font-weight: 500; }
+        .device-card-body p { font-size: 0.9em; color: var(--text-secondary); }
+        .device-card-actions { display: flex; gap: 10px; margin-top: auto; }
+        .device-card-actions button { flex-grow: 1; padding: 8px; font-size: 0.9em; }
+        .device-card-actions .delete-btn { background-color: var(--accent-error); }
+        dialog {
+            background: var(--bg-glass); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-primary);
+            width: 90%; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            position: fixed; top: 50%; left: 50%;
+            transform: translate(-50%, -50%); margin: 0;
+        }
+        dialog#confirmation-dialog, dialog#device-dialog { max-width: 800px; }
+        dialog#settings-dialog, dialog#project-loader-dialog { max-width: 500px; }
+        dialog::backdrop { background: rgba(0, 0, 0, 0.4); }
+        .dialog-content {
+            padding: 25px; display: flex; flex-direction: column; gap: 15px;
+            max-height: 80vh; overflow-y: auto;
+        }
+        .dialog-content h2 { font-weight: 500; margin-bottom: 10px; }
+        .dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+        #project-list { list-style: none; max-height: 300px; overflow-y: auto; }
+        #project-list li {
+            padding: 10px 15px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #project-list .project-name {
+            cursor: pointer;
+            flex-grow: 1;
+        }
+        #project-list .project-name:hover {
+            color: var(--accent-primary);
+        }
+        #project-list .delete-project-btn {
+            background-color: transparent;
+            border: none;
+            color: var(--text-secondary);
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+            box-shadow: none;
+            margin-left: 15px;
+        }
+        #project-list .delete-project-btn:hover {
+            background-color: var(--bg-surface-hover);
+            color: var(--accent-error);
+        }
+        #project-list .delete-project-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+        #project-list li:hover { background-color: var(--bg-surface-hover); }
+        #project-list .status-badge {
+            font-size: 0.8em; padding: 3px 8px; border-radius: 10px;
+            color: white;
+        }
+        .status-badge.completed { background-color: var(--accent-success); }
+        .status-badge.failed { background-color: var(--accent-error); }
+        .status-badge.running { background-color: var(--accent-primary); }
+        .device-task-card {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+        .device-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .device-card-header h5 {
+            font-size: 1.1em;
+            font-weight: 500;
+            margin-bottom: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-grow: 1;
+        }
+        .device-card-header h5 input {
+            font-size: 1em;
+            font-weight: 500;
+            flex-grow: 1;
+        }
+        .remove-task-btn {
+            background-color: transparent;
+            border: none;
+            color: var(--text-secondary);
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+            box-shadow: none;
+        }
+        .remove-task-btn:hover {
+            background-color: var(--bg-surface-hover);
+            color: var(--accent-error);
+        }
+        .remove-task-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+        .device-card-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px 25px;
+            align-items: start;
+        }
+        .peripheral-wrapper {
+            grid-column: 1 / -1;
+            margin-top: 10px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border-color);
+        }
+        .device-card-content > div {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .device-description {
+            flex-grow: 1;
+            resize: vertical;
+            min-height: 80px;
+        }
+        .remove-peripheral-btn {
+            background-color: transparent;
+            border: none;
+            color: var(--text-secondary);
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+            box-shadow: none;
+        }
+        .remove-peripheral-btn:hover {
+            background-color: var(--accent-error);
+            color: white;
+        }
+        .remove-peripheral-btn svg {
+            width: 14px;
+            height: 14px;
+        }
+        .data-flow-line {
+            display: flex;
+            align-items: center;
+            margin: 25px 5px;
+        }
+        .flow-node {
+            background-color: var(--bg-surface-hover);
+            padding: 8px 15px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        .flow-path {
+            flex-grow: 1;
+            height: 2px;
+            background-color: var(--border-color);
+            position: relative;
+            margin: 0 15px;
+        }
+        .flow-arrow {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background-color: var(--accent-primary);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--accent-primary-glow);
+            animation: flow-animation 2.5s linear infinite;
+        }
+        .flow-label {
+            position: absolute;
+            top: -22px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            background-color: var(--bg-base);
+            padding: 0 8px;
+            white-space: nowrap;
+        }
+        @keyframes flow-animation {
+            from { left: 0; }
+            to { left: 100%; }
+        }
+        #login-view { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
+        .form-container {
+            display: flex; flex-direction: column; gap: 15px; width: 340px;
+        }
+        .form-container h2 { text-align: center; margin-bottom: 10px; font-weight: 500; }
+        .form-container input { width: 100%; height: 44px; }
+        .password-wrapper { position: relative; display: flex; align-items: center; }
+        .password-wrapper input { padding-right: 40px; }
+        .password-toggle-btn {
+            position: absolute; right: 1px; top: 1px; bottom: 1px;
+            height: auto; width: 40px; background: none; border: none;
+            cursor: pointer; box-shadow: none; padding: 0;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .password-toggle-btn svg { stroke: var(--text-secondary); width: 20px; height: 20px; }
+        .form-toggle { color: var(--accent-primary); cursor: pointer; text-align: center; font-size: 0.9em; margin-top: 10px; }
+        .form-message { text-align: center; min-height: 20px; }
+        .error { color: var(--accent-error); }
+        .success { color: var(--accent-success); }
+
+            /* 【核心新增】部署操作按钮的样式 */
+        .deploy-action-btn {
+            padding: 12px 25px;
+            font-size: 1.1em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .deploy-action-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* --- 文件管理器侧边栏拉伸条 --- */
+        #sidebar-resizer {
+            width: 3px;
+            background-color: var(--border-color);
+            cursor: ew-resize; /* 东西向拉伸光标 */
+            flex-shrink: 0;
+            transition: background-color 0.2s ease;
+        }
+        #sidebar-resizer:hover {
+            background-color: var(--accent-primary);
+        }
+
+        /* --- 主界面 Gemini 风格动画和布局 --- */
+        #initial-prompt-container {
+            width: 100%;
+            height: 100%;
+            max-width: 900px; /* 增加最大宽度以适应新布局 */
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end; /* 内容置于底部 */
+            gap: 20px;
+            position: relative;
+        }
+        #welcome-greeting-wrapper {
+            position: absolute;
+            top: 25%;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+        }
+        #welcome-greeting {
+            display: inline-block;
+            overflow: hidden;
+            white-space: nowrap;
+            border-right: .15em solid var(--accent-primary);
+            /* 移除初始 opacity: 0 */
+        }
+        @keyframes typing {
+            from { width: 0 }
+            to {
+                width: 100%;
+                border-color: transparent; /* <-- 新增此行 */
+            }
+        }
+        @keyframes blink-caret {
+            from, to { border-color: transparent }
+            50% { border-color: var(--accent-primary); }
+        }
+
+        #prompt-input-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 28px;
+            padding: 8px 8px 8px 20px;
+            width: 100%;
+            position: relative;
+            opacity: 0;
+            transform: translateY(20px);
+            /* 新增下面这一行，让所有变化的属性都动起来 */
+            transition: all 0.4s ease-in-out;
+        }
+        /* --- 动画播放阶段 --- */
+        #prompt-input-wrapper:focus-within {
+             border-color: var(--accent-primary);
+             box-shadow: 0 0 15px -5px var(--accent-primary-glow);
+        }
+        #raw-text-input {
+            flex-grow: 1;
+            border: none;
+            background: transparent;
+            padding: 8px 0;
+            resize: none; /* 禁用右下角拉伸抓手 */
+            overflow-y: auto; /* 开始时隐藏滚动条 */
+            transition: all 0.4s ease-in-out;
+            line-height: 1.5;
+            max-height: 200px; /* 限制自动增高的高度 */
+        }
+        #raw-text-input:focus {
+            outline: none;
+            box-shadow: none;
+        }
+        #send-prompt-btn {
+             background-color: transparent; /* <-- 修改这里 */
+             color: var(--text-secondary); /* 默认颜色也需要改回普通状态 */
+             opacity: 1;
+             transition: all 0.4s ease-in-out;
+        }
+        #send-prompt-btn:not(:disabled) {
+             opacity: 1;
+        }
+        /* --- 基础样式和过渡定义 --- */
+        /* 为所有参与动画的元素添加平滑过渡 */
+        #prompt-input-wrapper,
+        #raw-text-input,
+        #expand-input-btn,
+        #send-prompt-btn {
+            transition: all 0.4s cubic-bezier(0.65, 0, 0.35, 1); /* 一个更优雅的缓动函数 */
+        }
+
+        /* 初始加载动画：只在首次加载时播放 */
+        #view-ai-workflow:not(.animation-finished) #welcome-greeting {
+            animation:
+                typing 1.5s steps(40, end) forwards,
+                blink-caret 0.75s step-end 2;
+        }
+        #view-ai-workflow:not(.animation-finished) #prompt-input-wrapper {
+            animation: slide-up 0.5s 1.5s forwards;
+        }
+
+        /* 动画播放完毕后的静态状态 */
+        #view-ai-workflow.animation-finished #welcome-greeting {
+            opacity: 1;
+            border-color: transparent;
+        }
+        #view-ai-workflow.animation-finished #prompt-input-wrapper {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+
+        /* --- 全屏模式 --- */
+        /* 全屏时的背景遮罩 */
+        #view-ai-workflow.fullscreen-active {
+            background: rgba(18, 18, 28, 0.8);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            z-index: 1000;
+        }
+
+        /* 全屏时，让内容容器撑满 */
+        #view-ai-workflow.fullscreen-active #initial-prompt-container {
+             height: 100%;
+        }
+
+        /* 核心：输入框wrapper的“变身”效果 */
+        #view-ai-workflow.fullscreen-active #prompt-input-wrapper {
+            height: 100%;
+            border-radius: 12px; /* 全屏时可以带一点小圆角，更精致 */
+            flex-direction: column;
+            align-items: stretch;
+            padding: 24px;
+        }
+
+        /* 全屏时，文本域撑满 */
+        #view-ai-workflow.fullscreen-active #raw-text-input {
+            height: 100%;
+            max-height: none; /* 取消最大高度限制 */
+            font-size: 1.2em; /* 字号也可以稍大一些 */
+        }
+
+        /* 全屏时，按钮的位置和图标切换 */
+        #view-ai-workflow.fullscreen-active #expand-input-btn {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            z-index: 10;
+        }
+
+        #view-ai-workflow.fullscreen-active .icon-expand { display: none; }
+        #view-ai-workflow.fullscreen-active .icon-collapse { display: block; }
+
+        /* 全屏时，发送按钮移动到右下角 */
+        #view-ai-workflow.fullscreen-active #send-prompt-btn {
+            position: absolute;
+            bottom: 24px;
+            right: 24px;
+        }
+
+        @keyframes slide-up {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        /* 思考中的指示器 */
+        #thinking-indicator {
+            display: none;
+            align-items: center;
+            gap: 15px;
+            padding: 10px;
+            position: absolute;
+            top: 25%;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        #thinking-indicator .spinner-icon {
+            animation: spin 1.5s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* 需求发送气泡动画 */
+        #prompt-animation-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* 让鼠标事件穿透 */
+        }
+        .prompt-bubble {
+            position: absolute;
+            bottom: 100px; /* 从输入框附近开始 */
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 20px;
+            background-color: var(--bg-surface);
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            animation: bubble-up 1s ease-out forwards;
+            max-width: 800px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        @keyframes bubble-up {
+            from {
+                bottom: 100px;
+                opacity: 1;
+            }
+            to {
+                bottom: 75%;
+                opacity: 0;
+            }
+        }
+        /* --- 全屏按钮的核心改造 --- */
+        #expand-input-btn {
+            /* 为按钮自身也添加过渡效果 */
+            transition: all 0.4s ease-in-out;
+        }
+
+        #view-ai-workflow.fullscreen-active #expand-input-btn {
+            /* 全屏时，将按钮定位到右上角 */
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            z-index: 1010; /* 确保在最上层 */
+        }
+
+        /* 全屏时，切换图标的显示/隐藏 */
+        #view-ai-workflow.fullscreen-active .icon-expand {
+            display: none;
+        }
+        #view-ai-workflow.fullscreen-active .icon-collapse {
+            display: block;
+        }
+
+        /* 新增：默认只显示“展开”图标，隐藏“收起”图标 */
+        .icon-collapse {
+            display: none;
+        }
+        .icon-expand {
+            display: block;
+        }
+        #prompt-input-wrapper > #expand-input-btn,
+        #prompt-input-wrapper > #send-prompt-btn {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            color: var(--text-secondary);
+        }
+
+        /* 2. 统一并美化按钮里的SVG图标 */
+        #prompt-input-wrapper > button svg {
+            stroke: currentColor; /* 让图标颜色继承按钮的color属性 */
+            stroke-width: 2.5;    /* 让线条稍粗一点，更清晰 */
+            transition: transform 0.2s ease;
+        }
+
+        /* 3. 优化鼠标悬停/聚焦效果 */
+        #prompt-input-wrapper > button:hover svg {<button id="expand-input-btn" title="展开/收起">
+            color: var(--text-primary);
+            transform: scale(1.1); /* 轻微放大，增加动感 */
+        }
+
+        /* 4. 修复全屏时“收起”按钮被遮挡的问题 */
+        #view-ai-workflow.fullscreen-active #expand-input-btn {
+            z-index: 10; /* 确保它在最上层，不会被文本框遮挡 */
+        }
+    </style>
+</head>
+<body>
+    <!-- Login View -->
+    <div id="login-view">
+        <div id="login-form-container" class="form-container">
+            <h2>登录 Zygo IDE</h2>
+            <input type="text" id="login-username" placeholder="用户名" value="testuser">
+            <div class="password-wrapper">
+                <input type="password" id="login-password" placeholder="密码" value="password123">
+                <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('login-password', this)">
+                    <svg class="eye-open" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <svg class="eye-closed" style="display: none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>
+                </button>
+            </div>
+            <button id="login-button">登录</button>
+            <p id="login-error" class="form-message error"></p>
+            <p class="form-toggle" onclick="toggleForms()">没有账户？注册一个</p>
+        </div>
+        <div id="register-form-container" class="form-container" style="display: none;">
+            <h2>注册新用户</h2>
+            <input type="text" id="register-username" placeholder="设置用户名">
+            <div class="password-wrapper">
+                <input type="password" id="register-password" placeholder="设置密码">
+                <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('register-password', this)">
+                    <svg class="eye-open" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <svg class="eye-closed" style="display: none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>
+                </button>
+            </div>
+            <button id="register-button">注册</button>
+            <p id="register-message" class="form-message"></p>
+            <p class="form-toggle" onclick="toggleForms()">已有账户？去登录</p>
+        </div>
+    </div>
+
+    <!-- Main IDE View -->
+    <div id="ide-view" class="ide-container" style="display: none;">
+        <div id="activity-bar">
+            <div class="activity-group">
+                <button id="btn-activity-ai" class="activity-btn active" title="AI 工作流"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg></button>
+                <button id="btn-activity-files" class="activity-btn" title="文件浏览器"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg></button>
+                <button id="btn-activity-devices" class="activity-btn" title="设备管理器"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 12h4"/><path d="M14 12h4"/><path d="M6 16h12"/></svg></button>
+            </div>
+            <div class="activity-group">
+                <button id="btn-theme-toggle" class="activity-btn" title="切换主题"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-icon-sun"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-icon-moon" style="display: none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg></button>
+                <button id="btn-settings" class="activity-btn" title="用户设置"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0-2l.15.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg></button>
+            </div>
+        </div>
+
+        <div class="content-container">
+            <div id="main-view">
+                <div id="view-ai-workflow" class="view active">
+                    <div id="prompt-animation-container"></div>
+
+                    <div id="initial-prompt-container">
+                        <div id="welcome-greeting-wrapper">
+                            <h1 id="welcome-greeting"></h1>
+                        </div>
+
+                        <div id="thinking-indicator" style="display: none;">
+                            <svg class="logo-icon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>
+                            <svg class="spinner-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>
+                        </div>
+
+                        <div id="prompt-input-wrapper">
+                             <textarea id="raw-text-input" rows="1" placeholder="描述您的项目想法..."></textarea>
+                            <button id="expand-input-btn" title="展开/收起">
+                                <svg class="icon-expand" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                                <svg class="icon-collapse" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
+                            </button>
+                             <button id="send-prompt-btn" title="发送" disabled>
+                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
+                             </button>
+                        </div>
+                    </div>
+                    <div id="workflow-stream-container"></div>
+                    <div id="deployment-actions-container" style="padding: 20px; display: none; justify-content: center; gap: 20px;"></div>
+                </div>
+
+                <div id="view-file-explorer" class="view">
+                    <div id="file-tree-panel">
+                        <div id="file-tree-header">
+                            <h3>文件浏览器</h3>
+                            <div style="display: flex; gap: 8px;">
+                                <button id="load-cloud-project-btn" class="secondary" title="加载云端项目">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                </button>
+                                <button id="open-local-folder-btn" class="secondary" title="打开本地文件夹">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div id="file-tree-container"></div>
+                    </div>
+                    <div id="sidebar-resizer"></div>
+                    <div id="editor-area-container" style="flex-grow: 1; display: flex; flex-direction: column;">
+                        <div id="editor-welcome-message" style="display: flex; flex-grow: 1; justify-content: center; align-items: center; text-align: center; color: var(--text-secondary);">
+                            <div>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" style="stroke: var(--border-color);"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>
+                                <h2 style="color: var(--text-primary); margin: 15px 0 5px;">Zygo AI IDE</h2>
+                                <p>请从左侧选择一个文件进行查看和编辑</p>
+                            </div>
+                        </div>
+                        <div id="code-editor-panel" style="display: none; flex-grow: 1; flex-direction: column;">
+                            <div id="code-editor-header">
+                                <span id="editing-file-name"></span>
+                                <button id="save-file-btn">保存</button>
+                            </div>
+                            <div id="monaco-editor-container" style="flex-grow: 1;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="view-device-manager" class="view">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h2>设备管理器</h2>
+                        <button id="add-device-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 5px;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                            注册新设备
+                        </button>
+                    </div>
+                    <div id="device-grid" class="device-grid"></div>
+                </div>
+            </div>
+
+            <div id="panel-resizer"></div>
+
+            <div id="problems-panel">
+                <div id="problems-panel-header">
+                    <span>问题</span>
+                    <button onclick="closeProblemsPanel()" style="background: none; border: none; cursor: pointer; color: var(--text-secondary); padding: 4px; box-shadow: none; border-radius: 4px; transition: all 0.2s ease;"
+                            onmouseover="this.style.backgroundColor='var(--bg-surface-hover)'; this.style.color='var(--text-primary)';"
+                            onmouseout="this.style.backgroundColor='transparent'; this.style.color='var(--text-secondary)';">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                </div>
+                <div id="problems-panel-content">
+                </div>
+            </div>
+
+            <div id="status-bar">
+                <div id="status-workflow" class="status-item">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0-4.4-3.6-8-8-8S5 5.6 5 10c0 4.4 3.6 8 8 8"/><path d="M12 2v4"/><path d="m6.4 7.4-3 3"/><path d="M2 12h4"/><path d="m6.4 16.6-3-3"/><path d="M12 18v4"/><path d="m17.6 16.6 3-3"/><path d="M22 12h-4"/><path d="m17.6 7.4 3 3"/></svg>
+                    <span>未开始</span>
+                </div>
+                 <div id="status-device" class="status-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 12h4"/></svg>
+                    <span>无设备</span>
+                </div>
+                <div id="status-problems"
+                     class="status-item"
+                     style="display:none;cursor:pointer;"
+                     title="切换问题面板"
+                     onclick="toggleProblemsPanel()">
+                </div>
+                <div id="status-user-actions">
+                    <div id="status-user" class="status-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        <span id="username-display"></span>
+                    </div>
+                    <button id="logout-button" class="activity-btn" style="width: auto; height: auto;" title="登出">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dialogs -->
+    <dialog id="confirmation-dialog">
+        <div class="dialog-content">
+            <h2>请确认项目信息</h2>
+            <p>AI已为您解析需求，请检查并补全信息后开始构建。</p>
+            <form id="confirmation-form" style="display: flex; flex-direction: column; gap: 15px;"></form>
+            <!-- 【核心修改】调整了对话框按钮 -->
+            <div class="dialog-actions">
+                <button type="button" id="save-template-btn" class="secondary">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 5px;"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    另存为模板
+                </button>
+                <button type="button" class="secondary" onclick="document.getElementById('confirmation-dialog').close()">取消</button>
+                <button type="submit" form="confirmation-form">确认并开始构建</button>
+            </div>
+        </div>
+    </dialog>
+
+    <dialog id="device-dialog">
+        <div class="dialog-content">
+            <h2 id="device-dialog-title">注册新设备</h2>
+            <form id="device-form" style="display: flex; flex-direction: column; gap: 15px;">
+                <input type="hidden" id="device-internal-id">
+                <input type="text" id="device-nickname" placeholder="设备昵称 (例如: 客厅的温湿度计)" required>
+                <input type="text" id="device-board" placeholder="开发板型号 (例如: esp32dev)" required>
+                <select id="cloud-platform">
+                    <option value="tuya" selected>涂鸦智能 (Tuya)</option>
+                    <option value="other">其他</option>
+                </select>
+                <input type="text" id="cloud-product-id" placeholder="产品ID (Product ID)">
+                <input type="text" id="cloud-device-id" placeholder="设备ID (Device ID)">
+                <input type="password" id="cloud-device-secret" placeholder="设备密钥 (Device Secret)">
+                <div id="device-peripherals-container" style="margin-top: 10px; border-top: 1px solid var(--border-color); padding-top: 15px;"></div>
+                <button type="button" class="secondary" onclick="addDevicePeripheralRow()">+ 添加外设</button>
+                <p id="device-form-error" class="form-message error"></p>
+            </form>
+             <div class="dialog-actions">
+                <button type="button" class="secondary" onclick="document.getElementById('device-dialog').close()">取消</button>
+                <button type="submit" id="device-form-submit-btn" form="device-form">注册</button>
+            </div>
+        </div>
+    </dialog>
+
+    <dialog id="settings-dialog">
+        <div class="dialog-content">
+            <h2>用户设置</h2>
+            <p>在这里配置您的个人偏好，例如Wi-Fi凭证，用于自动写入设备代码。</p>
+            <form id="settings-form" style="display: flex; flex-direction: column; gap: 15px;">
+                 <input type="text" id="wifi-ssid" placeholder="Wi-Fi 名称 (SSID)">
+                 <input type="password" id="wifi-password" placeholder="Wi-Fi 密码">
+                 <p id="settings-message" class="form-message"></p>
+            </form>
+             <div class="dialog-actions">
+                <button type="button" class="secondary" onclick="document.getElementById('settings-dialog').close()">取消</button>
+                <button type="submit" id="settings-form-submit-btn" form="settings-form">保存设置</button>
+            </div>
+        </div>
+    </dialog>
+
+    <dialog id="project-loader-dialog">
+        <div class="dialog-content">
+            <h2>加载云端项目</h2>
+            <p>您可以加载历史构建记录以查看文件，或使用项目模板开始一次新的构建。</p>
+            <ul id="project-list"></ul>
+        </div>
+         <div class="dialog-actions">
+            <button type="button" class="secondary" onclick="document.getElementById('project-loader-dialog').close()">关闭</button>
+        </div>
+    </dialog>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+    // --- State Management & Globals (unchanged) ---
+    let currentWorkflowId = null;
+    let accessToken = null;
+    let userDevices = [];
+    let statusInterval = null;
+    let currentEditingPath = null;
+    let lastRenderedStepState = {};
+    const API_BASE_URL = '/api/v1';
+    let isLocalProject = false;
+    let syncedLocalProjectId = null;
+    // 新增变量
+    let localFileHandles = new Map();
+    // 移到外部声明，并移除初始的 null 赋值
+    let monacoEditor;
+    let problemsFilter = 'all';
+    // --- DOM Elements ---
+    let loginView, ideView, workflowStreamContainer, initialPromptContainer, deviceGrid;
+
+    // ===================================================================
+    // Utility Functions (unchanged)
+    // ===================================================================
+
+    // ===================================================================
+    // Utility Functions
+    // ===================================================================
+
+    function setupSidebarResizer() {
+        const resizer = document.getElementById('sidebar-resizer');
+        const sidebar = document.getElementById('file-tree-panel');
+
+        function startResize(e) {
+            e.preventDefault();
+            const startX = e.clientX;
+            const startWidth = sidebar.offsetWidth;
+
+            function doResize(e) {
+                const newWidth = startWidth + e.clientX - startX;
+                if (newWidth > 200 && newWidth < window.innerWidth * 0.5) { // 设置最小/最大宽度
+                    sidebar.style.width = newWidth + 'px';
+                }
+            }
+
+            function stopResize() {
+                window.removeEventListener('mousemove', doResize);
+                window.removeEventListener('mouseup', stopResize);
+                document.body.style.cursor = '';
+            }
+
+            window.addEventListener('mousemove', doResize);
+            window.addEventListener('mouseup', stopResize);
+            document.body.style.cursor = 'ew-resize';
+        }
+
+        resizer.addEventListener('mousedown', startResize);
+    }
+
+    function closeProblemsPanel() {
+        const panel = document.getElementById('problems-panel');
+        const resizer = document.getElementById('panel-resizer');
+
+        // 直接设置为 none，不依赖其他逻辑
+        panel.style.display = 'none';
+        resizer.style.display = 'none';
+
+        // 可选：重置过滤器状态
+        problemsFilter = 'all';
+    }
+
+    function toggleProblemsPanel(forceShow = null) {
+        const panel = document.getElementById('problems-panel');
+        const resizer = document.getElementById('panel-resizer');
+
+        // 如果有强制显示参数，直接使用
+        if (forceShow !== null) {
+            panel.style.display = forceShow ? 'flex' : 'none';
+            resizer.style.display = forceShow ? 'block' : 'none';
+            return;
+        }
+
+        // 否则切换显示状态
+        // 使用 style.display 而不是 getComputedStyle，因为我们总是显式设置 display
+        const isCurrentlyHidden = panel.style.display === 'none' || !panel.style.display;
+
+        panel.style.display = isCurrentlyHidden ? 'flex' : 'none';
+        resizer.style.display = isCurrentlyHidden ? 'block' : 'none';
+    }
+
+    // 【核心新增】用于处理部署按钮点击的函数
+    async function postDeploymentAction(action) {
+        if (!currentWorkflowId) return;
+
+        const container = document.getElementById('deployment-actions-container');
+        container.innerHTML = `<span style="color: var(--text-secondary);">正在恢复: ${action}...</span>`;
+
+        try {
+            await fetchApi(`/workflows/${currentWorkflowId}/actions`, 'POST', { action: action }, 202);
+            // API调用成功后，轮询将自动接管后续的状态更新
+        } catch (error) {
+            alert(`执行操作失败: ${error.message}`);
+            // 如果失败，可能需要重新渲染按钮
+            checkStatus();
+        }
+    }
+
+    function escapeHtml(unsafe) {
+        if (typeof unsafe !== 'string') return unsafe;
+        return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+    function updateMessage(elementId, text, isError = false) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.textContent = text;
+            element.className = 'form-message ' + (isError ? 'error' : 'success');
+        }
+    }
+    function toggleForms() {
+        const loginForm = document.getElementById('login-form-container');
+        const registerForm = document.getElementById('register-form-container');
+        const isLoginVisible = loginForm.style.display !== 'none';
+        loginForm.style.display = isLoginVisible ? 'none' : 'flex';
+        registerForm.style.display = isLoginVisible ? 'flex' : 'none';
+    }
+    function togglePasswordVisibility(inputId, button) {
+        const input = document.getElementById(inputId);
+        const eyeOpen = button.querySelector('.eye-open');
+        const eyeClosed = button.querySelector('.eye-closed');
+        if (input.type === 'password') {
+            input.type = 'text';
+            eyeOpen.style.display = 'none'; eyeClosed.style.display = 'block';
+        } else {
+            input.type = 'password';
+            eyeOpen.style.display = 'block'; eyeClosed.style.display = 'none';
+        }
+    }
+
+    function defineAndSetMonacoTheme() {
+        // 读取CSS变量来定义主题颜色
+        const styles = getComputedStyle(document.documentElement);
+        const isDark = !document.documentElement.hasAttribute('data-theme');
+
+        const themeData = {
+            base: isDark ? 'vs-dark' : 'vs',
+            inherit: true,
+            rules: [
+                // 你可以在这里添加更精细的规则
+            ],
+            colors: {
+                'editor.background': styles.getPropertyValue('--bg-surface').trim(),
+                'editor.foreground': styles.getPropertyValue('--text-primary').trim(),
+                'editorCursor.foreground': styles.getPropertyValue('--accent-primary').trim(),
+                'editor.lineHighlightBackground': styles.getPropertyValue('--bg-surface-hover').trim(),
+                'editor.selectionBackground': styles.getPropertyValue('--scrollbar-thumb').trim(),
+                'editorWidget.background': styles.getPropertyValue('--bg-surface').trim(),
+                'editorWidget.border': styles.getPropertyValue('--border-color').trim()
+            }
+        };
+
+        monaco.editor.defineTheme('custom-theme', themeData);
+        monaco.editor.setTheme('custom-theme');
+    }
+
+    async function fetchApi(endpoint, method = 'GET', body = null, expectedStatus) {
+        const options = { method, headers: { 'Authorization': `Bearer ${accessToken}` } };
+        if (body) {
+            options.headers['Content-Type'] = 'application/json';
+            options.body = JSON.stringify(body);
+        }
+        const response = await fetch(API_BASE_URL + endpoint, options);
+        const responseText = await response.text();
+        const isSuccess = expectedStatus ? response.status === expectedStatus : response.ok;
+        if (!isSuccess) {
+            let errorMsg = `请求失败，状态码: ${response.status}`;
+            try { errorMsg = JSON.parse(responseText).error || errorMsg; } catch (e) {}
+            throw new Error(errorMsg);
+        }
+        try { return JSON.parse(responseText); } catch (e) { return {}; }
+    }
+
+    // ===================================================================
+    // Project Confirmation Dialog Logic (Refactored for Template Management)
+    // ===================================================================
+    function buildConfirmationFormHtml(data) {
+        // This function remains the same as the previous version
+        let formHtml = `
+            <label>项目名称:</label>
+            <input type="text" id="final-project-name" value="${escapeHtml(data.project_name || '')}" required>
+            <label>项目总描述:</label>
+            <textarea id="final-project-description" rows="3">${escapeHtml(data.project_description || '')}</textarea>
+            <h4 style="margin-top: 15px; margin-bottom: 5px; border-top: 1px solid var(--border-color); padding-top: 15px;">设备任务列表</h4>
+            <div id="device-tasks-container">
+        `;
+        (data.device_tasks || []).forEach((task, index) => {
+            formHtml += createPopulatedDeviceCardHtml(task, index);
+        });
+        formHtml += `</div>
+            <button type="button" id="add-device-task-btn" class="secondary" style="margin-top: 15px; width: 100%;">+ 添加一个新设备任务</button>
+            <div style="display: flex; align-items: center; gap: 15px; margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 15px;">
+                <h4>设备间通信计划</h4>
+                <button type="button" class="secondary" onclick="refreshCommunicationPlan()" title="根据上方修改重新分析通信" style="padding: 5px 10px; font-size: 0.8em;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v6h6"/><path d="M21 12A9 9 0 0 0 6 5.3L3 8"/><path d="M21 22v-6h-6"/><path d="M3 12a9 9 0 0 0 15 6.7l3-2.7"/></svg>
+                    刷新
+                </button>
+            </div>
+            <div id="communication-plan-container" style="padding: 10px 0;">`;
+
+        if (data.inter_device_communication && data.inter_device_communication.length > 0) {
+             formHtml += data.inter_device_communication.map(comm => `
+                <div class="data-flow-line">
+                    <div class="flow-node source">${escapeHtml(comm.source_device_role)}</div>
+                    <div class="flow-path">
+                        <div class="flow-arrow"></div>
+                        <div class="flow-label">[${escapeHtml(comm.protocol)}] ${escapeHtml(comm.data_description)}</div>
+                    </div>
+                    <div class="flow-node target">${escapeHtml(comm.target_device_role)}</div>
+                </div>
+             `).join('');
+        } else {
+            formHtml += `<p style="color: var(--text-secondary);">AI未检测到设备间通信。</p>`;
+        }
+        formHtml += `</div>`;
+        return formHtml;
+    }
+
+    function createPopulatedDeviceCardHtml(task, index) {
+        // This function remains the same as the previous version
+        return `
+        <div class="device-task-card">
+            <div class="device-card-header">
+                <h5>设备角色: <input type="text" class="device-role" value="${escapeHtml(task.device_role || '')}"></h5>
+                <button type="button" class="remove-task-btn" onclick="this.closest('.device-task-card').remove()" title="删除此设备任务">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                </button>
+            </div>
+            <div class="device-card-content">
+                <div>
+                    <label>目标硬件:</label>
+                    <select class="internal-device-id" required>
+                        <option value="">-- 请选择已注册的设备 --</option>
+                        ${userDevices.map(d => `<option value="${d.internal_device_id}" ${d.internal_device_id === task.internal_device_id ? 'selected' : ''}>${d.nickname} (${d.board_model})</option>`).join('')}
+                    </select>
+                </div>
+                <div>
+                    <label>设备职责描述:</label>
+                    <textarea class="device-description" rows="3">${escapeHtml(task.description || '')}</textarea>
+                </div>
+                <div class="peripheral-wrapper">
+                    <div class="peripheral-container" data-task-index="${index}">
+                        <label>外设配置:</label>
+                        <div style="display: grid; grid-template-columns: 2fr 2fr 1fr auto; gap: 10px; color: var(--text-secondary); font-size: 0.9em; margin-bottom: 5px;">
+                            <span>名称</span><span>型号</span><span>引脚</span><span></span>
+                        </div>
+                        ${(task.peripherals || []).map(p => `
+                            <div class="peripheral-item" style="display: grid; grid-template-columns: 2fr 2fr 1fr auto; gap: 10px; align-items: center; margin-bottom: 10px;">
+                                <input type="text" class="peripheral-name" value="${escapeHtml(p.name)}" required>
+                                <input type="text" class="peripheral-model" value="${escapeHtml(p.model || '')}">
+                                <input type="number" class="peripheral-pin" placeholder="引脚" ${p.pin === 'USER_INPUT_REQUIRED' ? 'required' : `value="${p.pin}"`}>
+                                <button type="button" class="remove-peripheral-btn" onclick="this.parentElement.remove()" title="删除外设">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                </button>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <button type="button" class="secondary" onclick="addPeripheralToTask(${index})" style="margin-top:10px;">+ 添加外设</button>
+                </div>
+            </div>
+        </div>
+        `;
+    }
+
+    function createNewDeviceCardHtml(index) {
+        // This function remains the same as the previous version
+        return `
+        <div class="device-task-card">
+            <div class="device-card-header">
+                <h5>设备角色: <input type="text" class="device-role" value="新设备 ${index + 1}"></h5>
+                <button type="button" class="remove-task-btn" onclick="this.closest('.device-task-card').remove()" title="删除此设备任务">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                </button>
+            </div>
+            <div class="device-card-content">
+                <div>
+                    <label>目标硬件:</label>
+                    <select class="internal-device-id" required>
+                        <option value="">-- 请选择已注册的设备 --</option>
+                        ${userDevices.map(d => `<option value="${d.internal_device_id}">${d.nickname} (${d.board_model})</option>`).join('')}
+                    </select>
+                </div>
+                <div>
+                    <label>设备职责描述:</label>
+                    <textarea class="device-description" rows="3" placeholder="描述这个新设备需要做什么"></textarea>
+                </div>
+                <div class="peripheral-wrapper">
+                    <div class="peripheral-container" data-task-index="${index}">
+                        <label>外设配置:</label>
+                    </div>
+                    <button type="button" class="secondary" onclick="addPeripheralToTask(${index})" style="margin-top:10px;">+ 添加外设</button>
+                </div>
+            </div>
+        </div>
+        `;
+    }
+
+    function collectPayloadFromForm() {
+        // This function remains the same as the previous version
+        const finalPayload = {
+            project_name: document.getElementById('final-project-name').value,
+            project_description: document.getElementById('final-project-description').value,
+            device_tasks: [],
+            inter_device_communication: []
+        };
+
+        document.querySelectorAll('.device-task-card').forEach(card => {
+            const task = {
+                device_role: card.querySelector('.device-role').value,
+                internal_device_id: card.querySelector('.internal-device-id').value,
+                description: card.querySelector('.device-description').value,
+                peripherals: []
+            };
+            card.querySelectorAll('.peripheral-item').forEach(p_item => {
+                task.peripherals.push({
+                    name: p_item.querySelector('.peripheral-name').value,
+                    model: p_item.querySelector('.peripheral-model').value,
+                    pin: parseInt(p_item.querySelector('.peripheral-pin').value, 10)
+                });
+            });
+            finalPayload.device_tasks.push(task);
+        });
+
+        document.querySelectorAll('.data-flow-line').forEach(line => {
+            const source = line.querySelector('.flow-node.source').textContent;
+            const target = line.querySelector('.flow-node.target').textContent;
+            const label = line.querySelector('.flow-label').textContent;
+            const protocolMatch = label.match(/\[(.*?)\]/);
+            const protocol = protocolMatch ? protocolMatch[1] : 'MQTT';
+            const data_description = label.replace(/\[.*?\]\s*/, '');
+            finalPayload.inter_device_communication.push({
+                source_device_role: source,
+                target_device_role: target,
+                data_description: data_description,
+                protocol: protocol
+            });
+        });
+
+        return finalPayload;
+    }
+
+    function renderCommunicationPlan(plan) {
+        // This function remains the same as the previous version
+        const container = document.getElementById('communication-plan-container');
+        if (!container) return;
+        let html = '';
+        const comms = plan.inter_device_communication || [];
+        if (comms.length > 0) {
+            html = comms.map(comm => `
+                <div class="data-flow-line">
+                    <div class="flow-node source">${escapeHtml(comm.source_device_role)}</div>
+                    <div class="flow-path"><div class="flow-arrow"></div><div class="flow-label">[${escapeHtml(comm.protocol)}] ${escapeHtml(comm.data_description)}</div></div>
+                    <div class="flow-node target">${escapeHtml(comm.target_device_role)}</div>
+                </div>
+            `).join('');
+        } else {
+            html = `<p style="color: var(--text-secondary);">AI未检测到设备间通信。</p>`;
+        }
+        container.innerHTML = html;
+    }
+
+    async function refreshCommunicationPlan() {
+        // This function remains the same as the previous version
+        const deviceTasks = [];
+        document.querySelectorAll('.device-task-card').forEach(card => {
+            const selectElement = card.querySelector('.internal-device-id');
+            const selectedOption = selectElement.options[selectElement.selectedIndex];
+            const nickname = selectedOption.text.split(' (')[0];
+            deviceTasks.push({
+                device_role: card.querySelector('.device-role').value,
+                nickname: nickname,
+                description: card.querySelector('.device-description').value,
+            });
+        });
+        const container = document.getElementById('communication-plan-container');
+        container.innerHTML = '<p style="color: var(--text-secondary);">正在重新分析...</p>';
+        try {
+            const newPlan = await fetchApi('/projects/analyze-communication', 'POST', { device_tasks: deviceTasks });
+            renderCommunicationPlan(newPlan);
+        } catch (error) {
+            container.innerHTML = `<p style="color: var(--accent-error);">分析失败: ${error.message}</p>`;
+        }
+    }
+
+    function addPeripheralToTask(taskIndex) {
+        // This function remains the same as the previous version
+        const container = document.querySelector(`.peripheral-container[data-task-index='${taskIndex}']`);
+        const newPeripheralHtml = `
+            <div class="peripheral-item" style="display: grid; grid-template-columns: 2fr 2fr 1fr auto; gap: 10px; align-items: center; margin-bottom: 10px;">
+                <input type="text" class="peripheral-name" placeholder="新外设名称" required>
+                <input type="text" class="peripheral-model" placeholder="型号/驱动类型">
+                <input type="number" class="peripheral-pin" placeholder="引脚号" required>
+                <button type="button" class="remove-peripheral-btn" onclick="this.parentElement.remove()" title="删除外设">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>`;
+        container.insertAdjacentHTML('beforeend', newPeripheralHtml);
+    }
+
+    // ===================================================================
+    // Main Application Flow
+    // ===================================================================
+
+    async function handleInitialSubmit() {
+        if (userDevices.length === 0) {
+            alert('请先注册一个设备才能开始构建项目。');
+            return;
+        }
+        const rawTextInput = document.getElementById('raw-text-input');
+        const rawText = rawTextInput.value;
+        if (!rawText.trim()) {
+            return;
+        }
+
+        // --- 新的交互逻辑 ---
+        const promptContainer = document.getElementById('initial-prompt-container');
+        const inputWrapper = document.getElementById('prompt-input-wrapper');
+        const thinkingIndicator = document.getElementById('thinking-indicator');
+        const animationContainer = document.getElementById('prompt-animation-container');
+
+        // 1. 创建并播放气泡动画
+        const bubble = document.createElement('div');
+        bubble.className = 'prompt-bubble';
+        bubble.textContent = rawText;
+        animationContainer.appendChild(bubble);
+        setTimeout(() => bubble.remove(), 1000); // 动画结束后移除
+
+        // 2. 切换UI状态
+        inputWrapper.style.display = 'none';
+        thinkingIndicator.style.display = 'flex';
+        rawTextInput.value = ''; // 清空输入框
+        document.getElementById('send-prompt-btn').disabled = true;
+
+
+        isLocalProject = false;
+        localFileHandles.clear();
+        lastRenderedStepState = {};
+        workflowStreamContainer.innerHTML = '';
+        document.getElementById('file-tree-container').innerHTML = '';
+        currentEditingPath = null;
+        if(monacoEditor) monacoEditor.setValue('');
+        document.getElementById('editing-file-name').textContent = '';
+
+        try {
+            const analyzeResponse = await fetchApi('/projects/analyze', 'POST', { raw_text: rawText });
+
+            // 成功后，隐藏思考指示器并显示确认对话框
+            thinkingIndicator.style.display = 'none';
+            populateConfirmationDialog(analyzeResponse);
+        } catch (error) {
+            alert(`AI分析失败: ${error.message}`);
+            // 失败后恢复输入状态
+            inputWrapper.style.display = 'flex';
+            thinkingIndicator.style.display = 'none';
+        }
+    }
+
+    function populateConfirmationDialog(config) {
+        stopPolling();
+        currentWorkflowId = null;
+        isLocalProject = false;
+
+        const confirmationDialog = document.getElementById('confirmation-dialog');
+
+        // 新增：监听关闭事件
+        const closeHandler = () => {
+            // 恢复主界面输入框
+            document.getElementById('prompt-input-wrapper').style.display = 'flex';
+            confirmationDialog.removeEventListener('close', closeHandler); // 清理监听器
+        };
+        confirmationDialog.addEventListener('close', closeHandler);
+
+        const confirmationForm = document.getElementById('confirmation-form');
+        confirmationForm.innerHTML = buildConfirmationFormHtml(config);
+        confirmationDialog.showModal();
+
+        document.getElementById('add-device-task-btn').addEventListener('click', () => {
+            const container = document.getElementById('device-tasks-container');
+            const newIndex = container.children.length;
+            container.insertAdjacentHTML('beforeend', createNewDeviceCardHtml(newIndex));
+        });
+
+
+        // --- 【核心修改】为“另存为模板”按钮添加事件监听 ---
+        document.getElementById('save-template-btn').addEventListener('click', async () => {
+            const payload = collectPayloadFromForm();
+            const btn = document.getElementById('save-template-btn');
+            btn.disabled = true;
+            try {
+                await fetchApi('/projects', 'POST', {
+                    name: payload.project_name,
+                    config_json: payload
+                }, 201);
+                btn.innerHTML = '<span>已保存!</span>';
+                setTimeout(() => {
+                    btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 5px;"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> 另存为模板';
+                    btn.disabled = false;
+                }, 2000);
+            } catch (error) {
+                alert(`保存模板失败: ${error.message}`);
+                btn.disabled = false;
+            }
+        });
+
+        // --- 【核心修改】从 onsubmit 中移除自动保存逻辑 ---
+        confirmationForm.onsubmit = async (event) => {
+            event.preventDefault();
+            confirmationDialog.close();
+            const finalPayload = collectPayloadFromForm();
+            const workflowView = document.getElementById('view-ai-workflow'); // 获取父容器
+
+            try {
+                document.getElementById('btn-activity-ai').click();
+                initialPromptContainer.style.display = 'none';
+                workflowStreamContainer.style.display = 'block';
+
+                // [最终修正] 在启动工作流时，为容器添加新样式类以改变布局
+                workflowView.classList.add('workflow-active');
+
+                workflowStreamContainer.innerHTML = `<div class="stream-entry"><span class="timestamp">${formatTimestamp()}</span><span class="status-running">[INFO]</span> <span>开始构建新项目: ${finalPayload.project_name}...</span></div>`;
+                const startResponse = await fetchApi('/workflows', 'POST', finalPayload, 202);
+                startPolling(startResponse.workflow_id);
+            } catch (error) {
+                // [最终修正] 如果启动失败，恢复布局
+                workflowView.classList.remove('workflow-active');
+                alert(`操作失败: ${error.message}`);
+                // 恢复初始界面
+                initialPromptContainer.style.display = 'flex';
+                workflowStreamContainer.style.display = 'none';
+            }
+        };
+    }
+
+    // ===================================================================
+    // Authentication and User Management (unchanged)
+    // ===================================================================
+    // ... (login, register, showIde functions are unchanged)
+    async function login() {
+        try {
+            const data = await fetchApi('/auth/login', 'POST', {
+                username: document.getElementById('login-username').value,
+                password: document.getElementById('login-password').value
+            });
+            accessToken = data.access_token;
+            localStorage.setItem('accessToken', accessToken);
+            localStorage.setItem('username', data.user_info.username);
+            showIde(data.user_info.username);
+        } catch (error) { updateMessage('login-error', error.message, true); }
+    }
+
+    async function register() {
+        try {
+            await fetchApi('/auth/register', 'POST', {
+                username: document.getElementById('register-username').value,
+                password: document.getElementById('register-password').value
+            }, 201);
+            updateMessage('register-message', '注册成功！请登录。', false);
+            setTimeout(toggleForms, 2000);
+        } catch (error) { updateMessage('register-message', error.message, true); }
+    }
+
+    function showIde(username) {
+        loginView.style.display = 'none';
+        ideView.style.display = 'flex';
+        document.getElementById('username-display').textContent = username;
+
+        const greetingEl = document.getElementById('welcome-greeting');
+        greetingEl.textContent = `Hi! ${username}`;
+
+        // 在所有动画（欢迎语1.5s + 输入框0.5s）结束后，
+        // 为父容器添加一个 "animation-finished" 类作为“已完成”的标记。
+        setTimeout(() => {
+            document.getElementById('view-ai-workflow').classList.add('animation-finished');
+        }, 2000); // 1500ms(延迟) + 500ms(动画) = 2000ms
+
+        loadUserDevices();
+    }
+
+    // ===================================================================
+    // Device Management (unchanged)
+    // ===================================================================
+    // ... (loadUserDevices, openEditDeviceDialog, handleDeviceFormSubmit, etc. are unchanged)
+    async function loadUserDevices() {
+        try {
+            userDevices = await fetchApi('/devices');
+            deviceGrid.innerHTML = '';
+            if (userDevices.length === 0) {
+                deviceGrid.innerHTML = '<p>您还没有注册任何设备。</p>';
+                return;
+            }
+            userDevices.forEach(dev => {
+                const peripheralsText = (dev.peripherals && dev.peripherals.length > 0)
+                    ? dev.peripherals.map(p => p.name).join(', ')
+                    : '无';
+                deviceGrid.innerHTML += `
+                    <div class="device-card">
+                        <div class="device-card-header"><h3>${dev.nickname}</h3><span>${dev.board_model}</span></div>
+                        <div class="device-card-body">
+                           <p><strong>ID:</strong> ${dev.internal_device_id}</p>
+                           <p><strong>外设:</strong> ${peripheralsText}</p>
+                        </div>
+                        <div class="device-card-actions">
+                            <button onclick="openEditDeviceDialog('${dev.internal_device_id}')">编辑</button>
+                            <button class="delete-btn" onclick="deleteDevice('${dev.internal_device_id}')">删除</button>
+                        </div>
+                    </div>`;
+            });
+        } catch (error) {
+            deviceGrid.innerHTML = `<p style="color: var(--accent-error);">加载设备失败: ${error.message}</p>`;
+        }
+    }
+
+    function openEditDeviceDialog(deviceId) {
+        const device = userDevices.find(d => d.internal_device_id === deviceId);
+        if (!device) return;
+        document.getElementById('device-dialog').showModal();
+        document.getElementById('device-dialog-title').textContent = '编辑设备';
+        document.getElementById('device-form-submit-btn').textContent = '更新';
+        document.getElementById('device-internal-id').value = device.internal_device_id || '';
+        document.getElementById('device-nickname').value = device.nickname || '';
+        document.getElementById('device-board').value = device.board_model || '';
+        document.getElementById('cloud-platform').value = device.cloud_platform || 'tuya';
+        document.getElementById('cloud-product-id').value = device.cloud_product_id || '';
+        document.getElementById('cloud-device-id').value = device.cloud_device_id || '';
+        document.getElementById('cloud-device-secret').value = device.cloud_device_secret || '';
+        renderDevicePeripherals(device.peripherals);
+    }
+
+    async function handleDeviceFormSubmit(event) {
+        event.preventDefault();
+        const internalId = document.getElementById('device-internal-id').value;
+        const isEditing = !!internalId;
+        const payload = {
+            nickname: document.getElementById('device-nickname').value,
+            board_model: document.getElementById('device-board').value,
+            cloud_platform: document.getElementById('cloud-platform').value,
+            cloud_product_id: document.getElementById('cloud-product-id').value,
+            cloud_device_id: document.getElementById('cloud-device-id').value,
+            cloud_device_secret: document.getElementById('cloud-device-secret').value
+        };
+        const peripherals = [];
+        document.querySelectorAll('#device-peripherals-container .peripheral-item').forEach(item => {
+            const nameInput = item.querySelector('.peripheral-name');
+            const modelInput = item.querySelector('.peripheral-model');
+            const pinInput = item.querySelector('.peripheral-pin');
+            if (nameInput && modelInput && pinInput && nameInput.value.trim()) {
+                peripherals.push({
+                    name: nameInput.value.trim(),
+                    model: modelInput.value.trim() || 'Generic',
+                    pin: pinInput.value ? parseInt(pinInput.value, 10) : null
+                });
+            }
+        });
+        payload.peripherals = peripherals;
+        const url = isEditing ? `/devices/${internalId}` : '/devices';
+        const method = isEditing ? 'PUT' : 'POST';
+        try {
+            await fetchApi(url, method, payload, isEditing ? 200 : 201);
+            document.getElementById('device-dialog').close();
+            await loadUserDevices();
+        } catch (error) {
+            updateMessage('device-form-error', error.message, true);
+        }
+    }
+
+    function renderDevicePeripherals(peripherals = []) {
+        const container = document.getElementById('device-peripherals-container');
+        container.innerHTML = '<h4>外设配置</h4>';
+        container.innerHTML += `
+             <div style="display: grid; grid-template-columns: 2fr 2fr 1fr auto; gap: 10px; color: var(--text-secondary); font-size: 0.9em; margin-bottom: 5px; padding: 0 5px;">
+                <span>名称</span><span>型号</span><span>引脚</span><span></span>
+            </div>
+        `;
+        if (!peripherals || peripherals.length === 0) {
+            container.innerHTML += '<p class="text-secondary" style="font-size: 0.9em; text-align: center; margin: 10px 0;">该设备暂未配置外设</p>';
+        } else {
+            peripherals.forEach((p, index) => {
+                const peripheralHtml = `
+                    <div class="peripheral-item" style="display: grid; grid-template-columns: 2fr 2fr 1fr auto; gap: 10px; align-items: center; margin-bottom: 10px;">
+                         <input type="text" class="peripheral-name" value="${escapeHtml(p.name || '')}" placeholder="外设名称" required>
+                        <input type="text" class="peripheral-model" value="${escapeHtml(p.model || '')}" placeholder="型号/驱动类型">
+                        <input type="number" class="peripheral-pin" value="${p.pin || ''}" placeholder="引脚号" required>
+
+                        <button type="button" class="remove-peripheral-btn" onclick="this.parentElement.remove()" title="删除外设">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        </button>
+                    </div>`;
+                container.insertAdjacentHTML('beforeend', peripheralHtml);
+            });
+        }
+    }
+
+    function addDevicePeripheralRow() {
+        const container = document.getElementById('device-peripherals-container');
+        const placeholder = container.querySelector('p');
+        if (placeholder) placeholder.remove();
+        const newPeripheralHtml = `
+            <div class="peripheral-item" style="display: grid; grid-template-columns: 2fr 2fr 1fr auto; gap: 10px; align-items: center; margin-bottom: 10px;">
+                <input type="text" class="peripheral-name" placeholder="新外设名称" required>
+                <input type="text" class="peripheral-model" placeholder="型号/驱动类型">
+                <input type="number" class="peripheral-pin" placeholder="引脚号" required>
+
+                <button type="button" class="remove-peripheral-btn" onclick="this.parentElement.remove()" title="删除外设">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>`;
+        container.insertAdjacentHTML('beforeend', newPeripheralHtml);
+    }
+
+    async function deleteDevice(deviceId) {
+        if (!confirm('确定要删除这个设备吗？')) return;
+        try {
+            await fetchApi(`/devices/${deviceId}`, 'DELETE');
+            await loadUserDevices();
+        } catch (error) { alert(`删除失败: ${error.message}`); }
+    }
+
+    // ===================================================================
+    // File System (Local & Remote) (unchanged)
+    // ===================================================================
+    // ... (openLocalFolder, processDirectory, buildTreeHtml, etc. are unchanged)
+    async function openLocalFolder() {
+        if (!window.showDirectoryPicker) {
+            alert('您的浏览器不支持此功能。请使用最新版本的Chrome或Edge浏览器。');
+            return;
+        }
+        try {
+            const dirHandle = await window.showDirectoryPicker();
+            stopPolling();
+            isLocalProject = true;
+            currentWorkflowId = null; // 重置云端项目ID
+            syncedLocalProjectId = null; // 重置已同步的项目ID
+            localFileHandles.clear();
+
+            const treeContainer = document.getElementById('file-tree-container');
+            treeContainer.innerHTML = '<p style="padding: 10px; color: var(--text-secondary);">正在读取文件夹...</p>';
+
+            const treeData = await processDirectory(dirHandle);
+
+            if (treeData.length > 0) {
+                treeContainer.innerHTML = '';
+                treeContainer.appendChild(buildTreeHtml(treeData, ''));
+            } else {
+                treeContainer.innerHTML = '<p style="padding: 10px; color: var(--text-secondary);">文件夹为空。</p>';
+            }
+
+            document.querySelector('#status-workflow span').textContent = dirHandle.name;
+            document.querySelector('#status-device span').textContent = '本地项目';
+
+        } catch (error) {
+            if (error.name !== 'AbortError') {
+                console.error('打开文件夹失败:', error);
+                alert(`打开文件夹失败: ${error.message}`);
+            }
+        }
+    }
+
+    async function syncLocalProject() {
+        if (!isLocalProject || localFileHandles.size === 0) {
+            alert("没有可同步的本地项目。");
+            return;
+        }
+
+        const syncButton = document.getElementById('sync-local-project-btn');
+        syncButton.disabled = true;
+        syncButton.textContent = '同步中...';
+
+        try {
+            const zip = new JSZip();
+            // 递归地将文件句柄添加到zip中
+            for (const [path, handle] of localFileHandles.entries()) {
+                if (handle.kind === 'file') {
+                    const file = await handle.getFile();
+                    zip.file(path, file);
+                }
+            }
+
+            const zipBlob = await zip.generateAsync({ type: "blob" });
+
+            const formData = new FormData();
+            formData.append('project_zip', zipBlob, 'project.zip');
+
+            // 使用原生的 fetch 发送 FormData
+            const response = await fetch(`${API_BASE_URL}/projects/sync-local`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${accessToken}` },
+                body: formData
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `同步失败，状态码: ${response.status}`);
+            }
+
+            const result = await response.json();
+            syncedLocalProjectId = result.localProjectId; // 保存返回的ID
+
+            syncButton.textContent = '同步成功!';
+            syncButton.onclick = null; // 禁用按钮的再次点击
+
+        } catch (error) {
+            alert(`项目同步失败: ${error.message}`);
+            syncButton.textContent = '同步失败';
+            setTimeout(() => {
+                syncButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>`;
+                syncButton.disabled = false;
+            }, 3000);
+        }
+    }
+
+    async function processDirectory(dirHandle, path = '') {
+        const entries = [];
+        localFileHandles.set(path || dirHandle.name, dirHandle);
+        for await (const entry of dirHandle.values()) {
+            const currentPath = path ? `${path}/${entry.name}` : entry.name;
+            localFileHandles.set(currentPath, entry);
+            if (entry.kind === 'directory') {
+                entries.push({
+                    name: entry.name,
+                    type: 'folder',
+                    children: await processDirectory(entry, currentPath)
+                });
+            } else {
+                entries.push({ name: entry.name, type: 'file' });
+            }
+        }
+        entries.sort((a, b) => {
+            if (a.type === 'folder' && b.type !== 'folder') return -1;
+            if (a.type !== 'folder' && b.type === 'folder') return 1;
+            return a.name.localeCompare(b.name);
+        });
+        return entries;
+    }
+
+    function buildTreeHtml(nodes, path = '', pathToReveal = null) {
+        const ul = document.createElement('ul');
+        nodes.forEach(node => {
+            const li = document.createElement('li');
+            const currentPath = path ? `${path}/${node.name}` : node.name;
+            li.dataset.path = currentPath;
+            if (node.type === 'folder') {
+                li.className = 'folder';
+                if (pathToReveal && pathToReveal.startsWith(currentPath + '/')) {
+                    li.classList.add('open');
+                }
+                li.innerHTML = `<div class="tree-item"><span class="icon"></span>${node.name}</div>`;
+                if (node.children && node.children.length > 0) {
+                    const nestedUl = buildTreeHtml(node.children, currentPath, pathToReveal);
+                    nestedUl.className = 'nested';
+                    li.appendChild(nestedUl);
+                }
+                li.querySelector('.tree-item').onclick = (e) => { e.stopPropagation(); li.classList.toggle('open'); };
+            } else {
+                li.className = 'file';
+                li.innerHTML = `<div class="tree-item"><span class="icon"></span>${node.name}</div>`;
+                if (pathToReveal && pathToReveal === currentPath) {
+                     setTimeout(() => {
+                        document.querySelectorAll('.tree-item.active').forEach(el => el.classList.remove('active'));
+                        li.querySelector('.tree-item').classList.add('active');
+                     }, 0);
+                }
+                li.querySelector('.tree-item').onclick = (e) => {
+                    e.stopPropagation();
+                    document.querySelectorAll('.tree-item.active').forEach(el => el.classList.remove('active'));
+                    e.currentTarget.classList.add('active');
+                    viewFileContent(currentPath);
+                };
+            }
+            ul.appendChild(li);
+        });
+        return ul;
+    }
+
+    async function loadAndRenderFileTree(workflowId, pathToReveal = null) {
+        if (!workflowId) {
+            console.warn("loadAndRenderFileTree called without a workflowId.");
+            return;
+        }
+        currentWorkflowId = workflowId;
+        isLocalProject = false;
+
+        const treeContainer = document.getElementById('file-tree-container');
+        treeContainer.innerHTML = '<p style="padding: 10px; color: var(--text-secondary);">加载文件中...</p>';
+        try {
+            const treeData = await fetchApi(`/workflows/${currentWorkflowId}/files`);
+            if (treeData?.length > 0) {
+                treeContainer.innerHTML = '';
+                treeContainer.appendChild(buildTreeHtml(treeData, '', pathToReveal));
+            } else {
+                treeContainer.innerHTML = '<p style="padding: 10px; color: var(--text-secondary);">工作区为空。</p>';
+            }
+        } catch (error) {
+            treeContainer.innerHTML = `<p style="padding: 10px; color: var(--accent-error);">加载文件树失败: ${error.message}</p>`;
+        }
+    }
+
+    async function viewFileContent(filePath) {
+        if (!monacoEditor) { return; }
+
+        // 新增：打开新文件时，立即清空上一个文件的错误标记
+        monaco.editor.setModelMarkers(monacoEditor.getModel(), 'syntax-checker', []);
+        renderProblemsPanel([]); // 同时隐藏并清空问题面板
+
+        // 显示编辑器，隐藏欢迎页
+        document.getElementById('editor-welcome-message').style.display = 'none';
+        document.getElementById('code-editor-panel').style.display = 'flex';
+
+        monacoEditor.updateOptions({ readOnly: true });
+        monacoEditor.setValue('// 正在加载文件...\n// ' + filePath);
+        document.getElementById('editing-file-name').textContent = filePath;
+        currentEditingPath = filePath;
+
+        try {
+            let content = '';
+            if (isLocalProject) {
+                const handle = localFileHandles.get(filePath);
+                if (handle && handle.kind === 'file') {
+                    const file = await handle.getFile();
+                    content = await file.text();
+                } else { throw new Error('找不到文件句柄'); }
+            } else {
+                const data = await fetchApi(`/workflows/${currentWorkflowId}/files?path=${encodeURIComponent(filePath)}`);
+                content = data.content;
+            }
+
+            const extension = filePath.split('.').pop();
+            const langMap = {
+                'js': 'javascript', 'html': 'html', 'css': 'css',
+                'py': 'python', 'json': 'json', 'md': 'markdown',
+                'cpp': 'cpp', 'h': 'cpp', 'ino': 'cpp',
+                'c': 'c', 'hpp': 'cpp'
+            };
+            const language = langMap[extension] || 'plaintext';
+
+            monacoEditor.setValue(content);
+            monaco.editor.setModelLanguage(monacoEditor.getModel(), language);
+            monacoEditor.updateOptions({ readOnly: false });
+
+        } catch (error) {
+            monacoEditor.setValue(`// 加载文件失败: ${error.message}`);
+        }
+    }
+
+    function renderProblemsPanel(markers) {
+        const panel          = document.getElementById('problems-panel');
+        const content        = document.getElementById('problems-panel-content');
+        const problemsToggle = document.getElementById('status-problems');
+
+        /* 0. 无问题时隐藏 */
+        if (!markers || markers.length === 0) {
+            toggleProblemsPanel(false);
+            problemsToggle.style.display = 'none';
+            return;
+        }
+
+        /* 1. 统计并自动选择过滤级别 */
+        const errorCount   = markers.filter(m => m.severity === monaco.MarkerSeverity.Error  ).length;
+        const warningCount = markers.filter(m => m.severity === monaco.MarkerSeverity.Warning).length;
+        const infoCount    = markers.filter(m => m.severity === monaco.MarkerSeverity.Info   ).length;
+        if (problemsFilter === 'all') {
+            if      (errorCount)   problemsFilter = 'errors';
+            else if (warningCount) problemsFilter = 'warnings';
+            else if (infoCount)    problemsFilter = 'info';
+        }
+
+        /* 2. 右下角图标 */
+        const activeClass = t => (problemsFilter === t ? 'active' : '');
+        let statusHtml = '';
+
+        if (errorCount) {
+            statusHtml += `
+              <div class="status-item ${activeClass('errors')}"
+                   onclick="filterProblems('errors')" style="cursor:pointer;">
+                <svg class="icon-error" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                     viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"
+                     stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M8,15 C4.134,15 1,11.866 1,8
+                           C1,4.134 4.134,1 8,1
+                           C11.866,1 15,4.134 15,8
+                           C15,11.866 11.866,15 8,15 Z
+                           M8,9.5 L8,5 M8,12.5 L8,12.501"/>
+                </svg><span>${errorCount}</span>
+              </div>`;
+        }
+        if (warningCount) {
+            statusHtml += `
+              <div class="status-item ${activeClass('warnings')}"
+                   onclick="filterProblems('warnings')" style="cursor:pointer;">
+                <svg class="icon-warning" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16 a2 2 0 0 0 1.73-3Z"/>
+                  <line x1="12" y1="9"  x2="12"    y2="13"/>
+                  <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg><span>${warningCount}</span>
+              </div>`;
+        }
+        if (infoCount) {
+            statusHtml += `
+              <div class="status-item ${activeClass('info')}"
+                   onclick="filterProblems('info')" style="cursor:pointer;">
+                <svg class="icon-info" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="16" x2="12"   y2="12"/>
+                  <line x1="12" y1="8"  x2="12.01"y2="8"/>
+                </svg><span>${infoCount}</span>
+              </div>`;
+        }
+        problemsToggle.innerHTML     = statusHtml;
+        problemsToggle.style.display = 'flex';  // 反正有 marker 就展示
+
+        /* 3. 面板详细列表 */
+        const sevColor = {
+            [monaco.MarkerSeverity.Error]  : 'var(--accent-error)',
+            [monaco.MarkerSeverity.Warning]: 'var(--accent-warn)',
+            [monaco.MarkerSeverity.Info]   : 'var(--accent-primary)'
+        };
+        const sevText = {
+            [monaco.MarkerSeverity.Error]  : 'Error',
+            [monaco.MarkerSeverity.Warning]: 'Warning',
+            [monaco.MarkerSeverity.Info]   : 'Info'
+        };
+
+        const makeSection = (sev, title) => {
+            const list = markers.filter(m => m.severity === sev);
+            if (!list.length) return '';
+            let html = `<h4 style="margin:10px 0 5px;font-weight:500;font-family:var(--font-family);
+                                  border-bottom:1px solid var(--border-color);">
+                          ${title} <span style="font-size:.85em;color:var(--text-secondary)">(${list.length})</span>
+                        </h4><ul style="list-style:none;padding-left:5px;">`;
+            list.forEach(m=>{
+                const jump = `monacoEditor.revealLineInCenter(${m.startLineNumber});
+                              monacoEditor.setPosition({lineNumber:${m.startLineNumber},column:${m.startColumn}});
+                              monacoEditor.focus();`;
+                html += `<li style="padding:4px;border-radius:4px;cursor:pointer;"
+                             onmouseover="this.style.backgroundColor='var(--bg-surface-hover)'"
+                             onmouseout ="this.style.backgroundColor='transparent'"
+                             onclick="${jump}">
+                           <span style="display:inline-block;width:65px;font-weight:500;color:${sevColor[sev]};">
+                             ${sevText[sev]}
+                           </span>
+                           <span style="color:var(--text-secondary);">[L${m.startLineNumber},C${m.startColumn}]</span>:
+                           <span>${escapeHtml(m.message)}</span>
+                         </li>`;
+            });
+            return html + '</ul>';
+        };
+
+        let contentHtml = '';
+        if (problemsFilter === 'all') {
+            contentHtml += makeSection(monaco.MarkerSeverity.Error  ,'错误');
+            contentHtml += makeSection(monaco.MarkerSeverity.Warning,'警告');
+            contentHtml += makeSection(monaco.MarkerSeverity.Info   ,'信息');
+        } else if (problemsFilter === 'errors')   contentHtml = makeSection(monaco.MarkerSeverity.Error  ,'错误');
+        else if (problemsFilter === 'warnings')   contentHtml = makeSection(monaco.MarkerSeverity.Warning,'警告');
+        else if (problemsFilter === 'info')       contentHtml = makeSection(monaco.MarkerSeverity.Info   ,'信息');
+
+        if (!contentHtml)
+            contentHtml = '<p style="text-align:center;color:var(--text-secondary);margin-top:20px;">没有符合当前过滤器的问题。</p>';
+
+        content.innerHTML = contentHtml;
+
+        /* 4. 确保面板展开 */
+        toggleProblemsPanel(true);
+    }
+
+    function filterProblems(type) {
+        if (problemsFilter === type) {
+            // 再次点击同一个按钮时，隐藏问题面板
+            problemsFilter = 'all';
+            toggleProblemsPanel(false); // 关闭问题栏
+            return;
+        } else {
+            problemsFilter = type;
+        }
+
+        // 重新渲染当前的markers
+        if (monacoEditor) {
+            const model = monacoEditor.getModel();
+            const markers = monaco.editor.getModelMarkers({ resource: model.uri });
+            renderProblemsPanel(markers);
+        }
+    }
+
+    async function analyzeCurrentFileSyntax() {
+        if (!monacoEditor || !currentEditingPath) return;
+        const ext = currentEditingPath.split('.').pop().toLowerCase();
+        let language = null;
+
+        if (['cpp', 'h', 'hpp', 'ino', 'c'].includes(ext)) {
+            language = 'cpp';
+        } else if (ext === 'py') {
+            language = 'python';
+        }
+
+        if (!language) {
+            monaco.editor.setModelMarkers(monacoEditor.getModel(), 'syntax-checker', []);
+            renderProblemsPanel([]);
+            return;
+        }
+
+        const code = monacoEditor.getValue();
+        try {
+            const payload = {
+                code: code,
+                language: language,
+                filePath: currentEditingPath,
+                workflowId: currentWorkflowId,
+                localProjectId: syncedLocalProjectId
+            };
+            const result = await fetchApi('/projects/analyze-syntax', 'POST', payload);
+
+            if (result && result.errors) {
+                const model = monacoEditor.getModel();
+                const modelLineCount = model.getLineCount();
+
+                // 在映射前，先过滤掉无效和越界的错误
+                const markers = result.errors
+                    .filter(err => err && typeof err.line === 'number' && err.line > 0 && err.line <= modelLineCount)
+                    .map(err => ({
+                        message: err.message,
+                        severity: err.severity === 'info' ? monaco.MarkerSeverity.Info : (err.severity === 'warning' ? monaco.MarkerSeverity.Warning : monaco.MarkerSeverity.Error),
+                        startLineNumber: err.line,
+                        startColumn: err.column || 1,
+                        endLineNumber: err.line,
+                        endColumn: model.getLineLength(err.line) + 1
+                    }));
+
+                monaco.editor.setModelMarkers(model, 'syntax-checker', markers);
+                renderProblemsPanel(markers);
+            }
+        } catch (error) {
+            console.error("Syntax analysis request failed:", error);
+            renderProblemsPanel([{
+                message: `语法分析服务请求失败: ${error.message}`,
+                startLineNumber: 1,
+                startColumn: 1,
+                severity: monaco.MarkerSeverity.Warning,
+            }]);
+        }
+    }
+
+    async function saveFileContent() {
+        if (!currentEditingPath || !monacoEditor) return;
+        const saveBtn = document.getElementById('save-file-btn');
+
+        saveBtn.textContent = '保存中...';
+        saveBtn.disabled = true;
+
+        try {
+            const newContent = monacoEditor.getValue(); // 从Monaco Editor获取内容
+            if (isLocalProject) {
+                const handle = localFileHandles.get(currentEditingPath);
+                if (handle && handle.kind === 'file') {
+                    const writable = await handle.createWritable();
+                    await writable.write(newContent);
+                    await writable.close();
+                } else { throw new Error('找不到文件句柄'); }
+            } else {
+                await fetchApi(`/workflows/${currentWorkflowId}/files?path=${encodeURIComponent(currentEditingPath)}`, 'PUT', { content: newContent });
+            }
+
+            saveBtn.textContent = '已保存!';
+            setTimeout(() => { saveBtn.textContent = '保存'; saveBtn.disabled = false; }, 2000);
+        } catch (error) {
+            alert(`保存失败: ${error.message}`);
+            saveBtn.textContent = '保存';
+            saveBtn.disabled = false;
+        }
+    }
+
+
+    // ===================================================================
+    // Workflow Polling & Rendering (unchanged)
+    // ===================================================================
+    // ... (checkStatus, startPolling, stopPolling, etc. are unchanged)
+
+    async function performWorkflowAction(workflowId, action) {
+    // 【核心新增】一个专门用于发送操作的函数
+    try {
+        const actionButtonContainer = document.querySelector('#workflow-actions-container .actions');
+        if(actionButtonContainer) actionButtonContainer.innerHTML = `<p>正在执行 ${action}...</p>`;
+
+        await fetchApi(`/workflows/${workflowId}/actions`, 'POST', { action: action }, 202);
+        // Action is accepted, the polling will pick up the RUNNING state.
+    } catch (error) {
+        appendToWorkflowStream(`<div class="stream-entry status-failed">[ERROR] 执行操作失败: ${error.message}</div>`);
+    }
+    }
+
+    async function checkStatus() {
+        if (!currentWorkflowId || isLocalProject) return;
+        try {
+            const state = await fetchApi(`/workflows/${currentWorkflowId}`);
+            renderWorkflowUpdate(state);
+            if (['COMPLETED', 'FAILED'].includes(state.status)) {
+                stopPolling();
+                if (state.status === 'COMPLETED') {
+                    document.getElementById('btn-activity-files').click();
+                    const mainFile = 'src/app_main.ino';
+                    await loadAndRenderFileTree(currentWorkflowId, mainFile);
+                    await viewFileContent(mainFile);
+                }
+            }
+        } catch (error) {
+            stopPolling();
+            appendToWorkflowStream(`<div class="stream-entry status-failed">[ERROR] 无法获取工作流状态: ${error.message}。轮询已停止。</div>`);
+        }
+    }
+
+    function startPolling(workflowId) {
+        stopPolling();
+        currentWorkflowId = workflowId;
+        checkStatus();
+        statusInterval = setInterval(checkStatus, 1000);
+    }
+
+    function stopPolling() {
+        if (statusInterval) clearInterval(statusInterval);
+        statusInterval = null;
+    }
+
+    function formatTimestamp(date = new Date()) { return date.toLocaleTimeString('en-GB'); }
+
+    function appendToWorkflowStream(htmlContent) {
+        const container = document.getElementById('workflow-stream-container');
+        container.insertAdjacentHTML('beforeend', htmlContent);
+        container.scrollTop = container.scrollHeight;
+    }
+
+    // 在 <script> 标签内，用这个新函数完整替换旧的 renderWorkflowUpdate 函数
+function renderWorkflowUpdate(state) {
+    document.querySelector('#status-workflow span').textContent = state.status || 'N/A';
+    const currentTask = state.current_device_task;
+    document.querySelector('#status-device span').textContent = currentTask ? currentTask.device_role : '无设备';
+
+    const actionsContainer = document.getElementById('deployment-actions-container');
+
+    // 1. 处理部署按钮的显示/隐藏
+    if (state.status === 'PAUSED' && state.available_actions?.length > 0) {
+        let buttonsHtml = '';
+        if (state.available_actions.includes('DEPLOY_USB')) {
+            buttonsHtml += `
+                <button class="deploy-action-btn secondary" onclick="postDeploymentAction('DEPLOY_USB')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v-4"/><path d="M12 10V4"/><path d="M8 16H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h4"/><path d="m16 4 h4a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-4"/><path d="M8 12h8"/></svg>
+                    USB 部署
+                </button>`;
+        }
+        if (state.available_actions.includes('DEPLOY_OTA')) {
+            buttonsHtml += `
+                <button class="deploy-action-btn secondary" onclick="postDeploymentAction('DEPLOY_OTA')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12a7 7 0 1 1 14 0"/><path d="M8.5 12.5a4 4 0 1 1 7 0"/><path d="M12 17.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"/></svg>
+                    OTA 部署
+                </button>`;
+        }
+        actionsContainer.innerHTML = buttonsHtml;
+        actionsContainer.style.display = 'flex';
+    } else {
+        actionsContainer.style.display = 'none';
+    }
+
+    const existingActionsContainer = document.getElementById('workflow-actions-container');
+    if (existingActionsContainer) {
+        existingActionsContainer.remove();
+    }
+
+    if (state.status === 'PAUSED' && state.available_actions && state.available_actions.length > 0) {
+        let actionsHtml = '<div id="workflow-actions-container" class="status-actions-container">';
+        actionsHtml += '<p>等待操作：编译完成，请选择部署方式</p><div class="actions">';
+
+        state.available_actions.forEach(action => {
+            const actionText = action === 'DEPLOY_USB' ? 'USB 部署' : (action === 'DEPLOY_OTA' ? 'OTA 部署' : action);
+            actionsHtml += `<button onclick="performWorkflowAction('${state.workflow_id}', '${action}')">${actionText}</button>`;
+        });
+        actionsHtml += '</div></div>';
+        appendToWorkflowStream(actionsHtml);
+    }
+
+    if (!state.workflow_steps) return;
+
+    // 2. 处理工作流步骤的日志渲染
+    if (!state.workflow_steps) return;
+    state.workflow_steps.forEach(step => {
+        const stepStateKey = `${step.id}-${step.status}`;
+        if (lastRenderedStepState[stepStateKey] && ['completed', 'failed'].includes(step.status)) {
+            return;
+        }
+
+        // 【核心修正】在编译成功时，自动跳转到文件浏览器
+        if (step.id === 'compile_node' && step.status === 'completed' && !lastRenderedStepState[stepStateKey]) {
+            const hasSwitched = document.body.dataset.switchedToFileView === currentWorkflowId;
+            if (!hasSwitched) {
+                console.log("Compilation successful. Switching to file explorer view.");
+                document.getElementById('btn-activity-files').click();
+                loadAndRenderFileTree(currentWorkflowId, 'src/app_main.ino').then(() => {
+                    viewFileContent('src/app_main.ino');
+                });
+                document.body.dataset.switchedToFileView = currentWorkflowId;
+            }
+        }
+
+        let entryHtml = '';
+        const timestamp = formatTimestamp();
+        const statusClassMap = {
+            'running': 'status-running', 'completed': 'status-completed',
+            'failed': 'status-failed', 'paused': 'status-warn'
+        };
+        const statusText = (step.status || 'pending').toUpperCase();
+        const statusClass = statusClassMap[step.status] || '';
+
+        if (step.status !== 'pending' && !lastRenderedStepState[stepStateKey]) {
+             entryHtml = `<div class="stream-entry"><span class="timestamp">${timestamp}</span><span class="${statusClass}">[${statusText}]</span> <span>${step.name}...</span></div>`;
+             if (step.status === 'completed' || step.status === 'failed') {
+                if (step.output) {
+                    const formattedOutput = escapeHtml(step.output);
+                    entryHtml += `<div class="output-block"><div class="output-block-header">产出物: ${step.name}</div><div class="output-block-content"><pre><code>${formattedOutput}</code></pre></div></div>`;
+                }
+                if (step.status === 'failed' && step.log) {
+                    entryHtml += `<div class="output-block"><div class="output-block-header">错误日志:</div><div class="output-block-content"><pre><code>${escapeHtml(step.log)}</code></pre></div></div>`;
+                }
+             }
+             appendToWorkflowStream(entryHtml);
+             lastRenderedStepState[stepStateKey] = true;
+        }
+    });
+}
+    // ===================================================================
+    // Initial Setup
+    // ===================================================================
+
+    function setupActivityBar() {
+        // This function remains the same as the previous version
+        const buttons = document.querySelectorAll('#activity-bar .activity-group:first-child .activity-btn');
+        const views = document.querySelectorAll('#main-view .view');
+        const buttonToViewMap = {
+            'btn-activity-ai': 'view-ai-workflow',
+            'btn-activity-files': 'view-file-explorer',
+            'btn-activity-devices': 'view-device-manager'
+        };
+
+        const viewActivationLogic = {
+            'view-ai-workflow': () => {
+                const hasActiveWorkflow = !!currentWorkflowId && !isLocalProject;
+                initialPromptContainer.style.display = hasActiveWorkflow ? 'none' : 'flex';
+                workflowStreamContainer.style.display = hasActiveWorkflow ? 'block' : 'none';
+                if (hasActiveWorkflow) checkStatus();
+                renderProblemsPanel([]);
+
+                // --- 从这里开始添加 ---
+                // 如果动画已经播放过，就切换到静态显示样式
+                if (welcomeAnimationPlayed) {
+                    const greetingEl = document.getElementById('welcome-greeting');
+                    greetingEl.classList.remove('typing-active');
+                    greetingEl.classList.add('static-greeting');
+                }
+                // --- 到这里结束添加 ---
+            },
+            'view-file-explorer': () => {
+                const treeContainer = document.getElementById('file-tree-container');
+                if (!currentWorkflowId && !isLocalProject) {
+                     treeContainer.innerHTML = '<p style="padding: 10px; color: var(--text-secondary);">没有活动的构建任务。请先开始一个新项目或打开/加载一个项目。</p>';
+                }
+                if (!currentEditingPath) {
+                    renderProblemsPanel([]);
+                }
+            },
+            'view-device-manager': () => {
+                loadUserDevices();
+                // 新增：切换到此视图时，隐藏问题面板
+                renderProblemsPanel([]);
+            }
+        };
+
+        buttons.forEach(button => {
+            button.addEventListener('click', () => {
+                const targetViewId = buttonToViewMap[button.id];
+                if (!targetViewId) return;
+
+                buttons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+
+                views.forEach(view => view.classList.toggle('active', view.id === targetViewId));
+
+                if (viewActivationLogic[targetViewId]) {
+                    try { viewActivationLogic[targetViewId](); }
+                    catch (e) { console.error(`Error activating view ${targetViewId}:`, e); }
+                }
+            });
+        });
+    }
+
+    function setupThemeToggle() {
+        // This function remains the same as the previous version
+        const toggleButton = document.getElementById('btn-theme-toggle');
+        const sunIcon = document.querySelector('.theme-icon-sun');
+        const moonIcon = document.querySelector('.theme-icon-moon');
+        const applyTheme = (theme) => {
+            if (theme === 'light') {
+                document.documentElement.setAttribute('data-theme', 'light');
+                sunIcon.style.display = 'none'; moonIcon.style.display = 'block';
+            } else {
+                document.documentElement.removeAttribute('data-theme');
+                sunIcon.style.display = 'block'; moonIcon.style.display = 'none';
+            }
+            // 联动更新Monaco主题
+            if (monacoEditor) {
+                defineAndSetMonacoTheme();
+            }
+        };
+        toggleButton.addEventListener('click', () => {
+            const newTheme = document.documentElement.hasAttribute('data-theme') ? 'dark' : 'light';
+            localStorage.setItem('theme', newTheme);
+            applyTheme(newTheme);
+        });
+        applyTheme(localStorage.getItem('theme') || 'dark');
+    }
+
+    function setupSettings() {
+        // This function remains the same as the previous version
+        const settingsButton = document.getElementById('btn-settings');
+        const settingsDialog = document.getElementById('settings-dialog');
+        const settingsForm = document.getElementById('settings-form');
+        settingsButton.addEventListener('click', async () => {
+            settingsForm.reset();
+            updateMessage('settings-message', '', false);
+            try {
+                const config = await fetchApi('/user/config');
+                document.getElementById('wifi-ssid').value = config.wifi_ssid || '';
+                document.getElementById('wifi-password').value = config.wifi_password || '';
+            } catch (error) { updateMessage('settings-message', '无法加载配置', true); }
+            settingsDialog.showModal();
+        });
+        settingsForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const payload = {
+                wifi_ssid: document.getElementById('wifi-ssid').value,
+                wifi_password: document.getElementById('wifi-password').value
+            };
+            try {
+                await fetchApi('/user/config', 'PUT', payload);
+                updateMessage('settings-message', '设置已保存', false);
+                setTimeout(() => settingsDialog.close(), 1500);
+            } catch (error) { updateMessage('settings-message', error.message, true); }
+        });
+    }
+
+
+        function setupPanelResizer() {
+            const resizer = document.getElementById('panel-resizer');
+            const panel = document.getElementById('problems-panel');
+            const mainView = document.getElementById('main-view');
+
+            let startY, startHeight;
+
+            function startResize(e) {
+                startY = e.clientY;
+                startHeight = parseInt(document.defaultView.getComputedStyle(panel).height, 10);
+                window.addEventListener('mousemove', doResize);
+                window.addEventListener('mouseup', stopResize);
+                document.body.style.userSelect = 'none';
+                document.body.style.cursor = 'ns-resize'; // 添加全局鼠标样式
+            }
+
+            function doResize(e) {
+                const newHeight = startHeight - (e.clientY - startY);
+                // 设置合理的最小/最大高度
+                if (newHeight > 100 && newHeight < window.innerHeight * 0.5) {
+                    panel.style.height = newHeight + 'px';
+                }
+            }
+
+            function stopResize() {
+                window.removeEventListener('mousemove', doResize);
+                window.removeEventListener('mouseup', stopResize);
+                document.body.style.userSelect = '';
+                document.body.style.cursor = ''; // 恢复鼠标样式
+            }
+
+            resizer.addEventListener('mousedown', startResize);
+        }
+        window.closeProblemsPanel  = closeProblemsPanel;
+        window.toggleProblemsPanel = toggleProblemsPanel;
+        window.filterProblems      = filterProblems;
+        // --- Monaco Editor 初始化 ---
+        require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' }});
+        require(['vs/editor/editor.main'], function() {
+            // 直接赋值给外部声明的变量
+            monacoEditor = monaco.editor.create(document.getElementById('monaco-editor-container'), {
+                value: '',
+                language: 'plaintext',
+                automaticLayout: true,
+                fontSize: 15,
+                fontFamily: 'JetBrains Mono, Fira Code, monospace',
+                lineHeight: 1.7,
+                minimap: { enabled: false } // 默认关闭小地图以节省空间
+            });
+
+            // 初始化并应用自定义主题
+            defineAndSetMonacoTheme();
+            // --- 新增：实时语法检查的防抖触发器 ---
+            let debounceTimer;
+            monacoEditor.onDidChangeModelContent(() => {
+                // 清除上一个计时器
+                clearTimeout(debounceTimer);
+
+                // 设置一个新的计时器，在用户停止输入1500毫秒（1.5秒）后触发
+                debounceTimer = setTimeout(() => {
+                    analyzeCurrentFileSyntax();
+                }, 1500);
+            });
+        });
+        // Cache DOM elements
+        loginView = document.getElementById('login-view');
+        ideView = document.getElementById('ide-view');
+        workflowStreamContainer = document.getElementById('workflow-stream-container');
+        initialPromptContainer = document.getElementById('initial-prompt-container');
+        deviceGrid = document.getElementById('device-grid');
+
+        // Setup UI handlers
+        setupActivityBar();
+        setupThemeToggle();
+        setupSettings();
+        setupPanelResizer();
+        setupSidebarResizer();
+
+        window.togglePasswordVisibility = togglePasswordVisibility;
+        window.toggleForms = toggleForms;
+        window.openEditDeviceDialog = openEditDeviceDialog;
+        window.deleteDevice = deleteDevice;
+        window.addDevicePeripheralRow = addDevicePeripheralRow;
+        window.addPeripheralToTask = addPeripheralToTask;
+        window.refreshCommunicationPlan = refreshCommunicationPlan;
+        window.closeProblemsPanel = closeProblemsPanel;
+        window.toggleProblemsPanel = toggleProblemsPanel;
+        window.filterProblems = filterProblems;
+        window.postDeploymentAction = postDeploymentAction;
+        window.performWorkflowAction = performWorkflowAction; // 确保这个函数也暴露出去
+
+
+        const rawTextInput = document.getElementById('raw-text-input');
+        const sendPromptBtn = document.getElementById('send-prompt-btn');
+        const expandInputBtn = document.getElementById('expand-input-btn');
+        const promptContainer = document.getElementById('initial-prompt-container');
+
+        rawTextInput.addEventListener('input', () => {
+            // 自动增高
+            rawTextInput.style.height = 'auto';
+            rawTextInput.style.height = rawTextInput.scrollHeight + 'px';
+            // 启用/禁用发送按钮
+            sendPromptBtn.disabled = !rawTextInput.value.trim();
+        });
+
+        rawTextInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (!sendPromptBtn.disabled) {
+                    sendPromptBtn.click();
+                }
+            }
+        });
+
+        sendPromptBtn.addEventListener('click', handleInitialSubmit);
+        expandInputBtn.addEventListener('click', () => {
+            // 【核心修正】将 fullscreen-active class 切换到主视图容器上
+            document.getElementById('view-ai-workflow').classList.toggle('fullscreen-active');
+        });
+        document.getElementById('login-button').addEventListener('click', login);
+        document.getElementById('register-button').addEventListener('click', register);
+        document.getElementById('logout-button').addEventListener('click', () => {
+            localStorage.clear();
+            location.reload();
+        });
+        document.getElementById('add-device-btn').addEventListener('click', () => {
+            document.getElementById('device-form').reset();
+            document.getElementById('device-dialog-title').textContent = '注册新设备';
+            document.getElementById('device-form-submit-btn').textContent = '注册';
+            document.getElementById('device-internal-id').value = '';
+            renderDevicePeripherals([]);
+            document.getElementById('device-dialog').showModal();
+        });
+        document.getElementById('device-form').addEventListener('submit', handleDeviceFormSubmit);
+        document.getElementById('save-file-btn').addEventListener('click', saveFileContent);
+        document.getElementById('open-local-folder-btn').addEventListener('click', openLocalFolder);
+
+        // --- 【核心修改】项目加载和模板删除逻辑 ---
+        document.getElementById('load-cloud-project-btn').addEventListener('click', async () => {
+            const projectLoaderDialog = document.getElementById('project-loader-dialog');
+            const projectList = document.getElementById('project-list');
+            projectList.innerHTML = '<li>加载中...</li>';
+            projectLoaderDialog.showModal();
+            try {
+                const [history, savedProjects] = await Promise.all([
+                    fetchApi('/workflows/history').catch(() => []),
+                    fetchApi('/projects').catch(() => [])
+                ]);
+
+                projectList.innerHTML = '';
+
+                if (history.length > 0) {
+                    projectList.innerHTML += '<li style="color: var(--text-secondary); pointer-events: none; font-weight: bold;">构建历史 (可查看文件/删除)</li>';
+                    history.forEach(wf => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `
+                            <span class="project-name" title="点击加载文件">${escapeHtml(wf.project_name)}</span>
+                            <div>
+                               <span class="status-badge ${wf.status.toLowerCase()}">${escapeHtml(wf.status)}</span>
+                               <button class="delete-project-btn" title="删除此项目及文件">
+                                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                               </button>
+                            </div>`;
+
+                        li.querySelector('.project-name').onclick = () => {
+                            document.getElementById('btn-activity-files').click();
+                            startPolling(wf.workflow_id);
+                            loadAndRenderFileTree(wf.workflow_id);
+                            projectLoaderDialog.close();
+                        };
+
+                        li.querySelector('.delete-project-btn').onclick = async (e) => {
+                            e.stopPropagation();
+                            try {
+                                const deleteBtn = e.currentTarget;
+                                deleteBtn.innerHTML = '...';
+                                deleteBtn.disabled = true;
+                                await fetchApi(`/workflows/${wf.workflow_id}`, 'DELETE', null, 200);
+                                li.remove();
+                            } catch (error) {
+                                alert(`删除失败: ${error.message}`);
+                            }
+                        };
+                        projectList.appendChild(li);
+                    });
+                }
+
+                if (savedProjects.length > 0) {
+                    projectList.innerHTML += '<li style="color: var(--text-secondary); pointer-events: none; font-weight: bold; margin-top: 15px;">项目模板 (可使用/删除)</li>';
+                    savedProjects.forEach(p => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `
+                            <span class="project-name" title="点击使用此模板开始新构建">${escapeHtml(p.name)}</span>
+                            <button class="delete-project-btn" title="删除此模板">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                            </button>`;
+
+                        li.querySelector('.project-name').onclick = async () => {
+                            try {
+                                const projectData = await fetchApi(`/projects/${p.id}`);
+                                populateConfirmationDialog(projectData.config_json);
+                                projectLoaderDialog.close();
+                            } catch (error) {
+                                alert(`加载项目模板失败: ${error.message}`);
+                            }
+                        };
+
+                        li.querySelector('.delete-project-btn').onclick = async (e) => {
+                            e.stopPropagation();
+                            try {
+                                const deleteBtn = e.currentTarget;
+                                deleteBtn.innerHTML = '...';
+                                deleteBtn.disabled = true;
+                                await fetchApi(`/projects/${p.id}`, 'DELETE', null, 200);
+                                li.remove();
+                            } catch (error) {
+                                alert(`删除模板失败: ${error.message}`);
+                            }
+                        };
+                        projectList.appendChild(li);
+                    });
+                }
+
+                if (projectList.innerHTML === '') {
+                    projectList.innerHTML = '<li>没有找到任何项目或历史记录。</li>';
+                }
+            } catch (error) {
+                projectList.innerHTML = `<li>加载失败: ${error.message}</li>`;
+            }
+        });
+
+        // Check for stored token on load
+        const storedToken = localStorage.getItem('accessToken');
+        const storedUsername = localStorage.getItem('username');
+        if (storedToken && storedUsername) {
+            accessToken = storedToken;
+            showIde(storedUsername);
+        }
+    });
+    </script>
+</body>
+</html>

@@ -1,0 +1,96 @@
+{
+  "LM35_Interface": {
+    "status_enum": {
+      "lm35_status_t": [
+        "LM35_OK",
+        "LM35_ERROR_ADC",
+        "LM35_ERROR_TIMEOUT",
+        "LM35_ERROR_CALIBRATION",
+        "LM35_ERROR_NOT_INITIALIZED",
+        "LM35_ERROR_INVALID_CHANNEL"
+      ]
+    },
+    "functions": [
+      {
+        "name": "lm35_init",
+        "return_type": "lm35_status_t",
+        "parameters": [
+          {"name": "adc_channel", "type": "uint8_t", "description": "ADC通道号（ESP32-S3支持ADC1/ADC2，如0-17对应ADC1_CH0-ADC1_CH17）"},
+          {"name": "ref_voltage_mv", "type": "uint16_t", "description": "ADC参考电压（单位：mV，默认3300mV对应ESP32-S3内部3.3V）"},
+          {"name": "sampling_time_us", "type": "uint32_t", "description": "ADC采样时间（单位：μs，默认100μs）"},
+          {"name": "power_pin", "type": "int8_t", "description": "电源控制引脚（-1=禁用，如GPIO12用于传感器供电）"}
+        ]
+      },
+      {
+        "name": "lm35_read_temperature",
+        "return_type": "lm35_status_t",
+        "parameters": [
+          {"name": "temperature_c", "type": "float*", "description": "输出参数（温度值，单位：°C）"}
+        ]
+      },
+      {
+        "name": "lm35_set_adc_channel",
+        "return_type": "lm35_status_t",
+        "parameters": [
+          {"name": "adc_channel", "type": "uint8_t", "description": "新的ADC通道号（0-17）"}
+        ]
+      },
+      {
+        "name": "lm35_set_reference_voltage",
+        "return_type": "lm35_status_t",
+        "parameters": [
+          {"name": "ref_voltage_mv", "type": "uint16_t", "description": "新的参考电压（单位：mV）"}
+        ]
+      },
+      {
+        "name": "lm35_calibrate_zero",
+        "return_type": "lm35_status_t",
+        "parameters": [
+          {"name": "zero_temp_c", "type": "float", "description": "零温度校准值（单位：°C，默认0°C）"}
+        ]
+      },
+      {
+        "name": "lm35_calibrate_full_scale",
+        "return_type": "lm35_status_t",
+        "parameters": [
+          {"name": "full_scale_temp_c", "type": "float", "description": "满量程校准值（单位：°C，默认100°C）"}
+        ]
+      },
+      {
+        "name": "lm35_power_on",
+        "return_type": "lm35_status_t",
+        "parameters": []
+      },
+      {
+        "name": "lm35_power_off",
+        "return_type": "lm35_status_t",
+        "parameters": []
+      }
+    ],
+    "data_types": {
+      "lm35_raw_data_t": {
+        "raw_adc": "uint16_t"  
+      },
+      "lm35_calib_param_t": {
+        "zero_offset": "float",       
+        "full_scale_gain": "float"    
+      }
+    },
+    "hardware_config": {
+      "default_adc_channel": 0,       
+      "default_ref_voltage_mv": 3300, 
+      "default_sampling_time_us": 100, 
+      "power_pin": -1,                
+      "sensor_output_range": {
+        "min_voltage_mv": 0,          
+        "max_voltage_mv": 5000        
+      },
+      "default_full_scale_c": 100     
+    },
+    "error_handling": {
+      "retry_count": 3,               
+      "timeout_threshold": 200        
+    },
+    "note": "LM35为线性模拟温度传感器，输出电压与摄氏温度成正比（10mV/°C）。需通过ADC读取模拟值并转换为温度。校准需两点校准：1. 零温度（如0°C）时记录原始值并设置zero_offset；2. 满量程温度（如100°C）时记录原始值并计算full_scale_gain（gain=(full_scale_temp - zero_temp)/(full_scale_raw - zero_raw)）。实际温度计算公式：temperature_c = (raw_value - zero_offset) * full_scale_gain。"
+  }
+}

@@ -1,0 +1,173 @@
+{
+    "SPL06_001_Interface": {
+        "status_enum": {
+            "SPL06_StatusTypeDef": [
+                "SPL06_OK",
+                "SPL06_ERROR_I2C",
+                "SPL06_ERROR_SPI",
+                "SPL06_ERROR_REG_READ",
+                "SPL06_ERROR_REG_WRITE",
+                "SPL06_ERROR_TIMEOUT",
+                "SPL06_ERROR_CALIBRATION"
+            ]
+        },
+        "functions": [
+            {
+                "name": "spl06_init",
+                "description": "初始化SPL06-001传感器（配置通信接口+读取设备ID+加载校准参数）",
+                "return_type": "SPL06_StatusTypeDef",
+                "parameters": [
+                    {
+                        "name": "comm_mode",
+                        "type": "spl06_comm_mode_t",
+                        "description": "通信模式（I2C_MODE/SPI_MODE）"
+                    },
+                    {
+                        "name": "i2c_port",
+                        "type": "uint8_t",
+                        "description": "I2C端口号（仅I2C_MODE有效，如I2C_NUM_0）"
+                    },
+                    {
+                        "name": "sda_pin",
+                        "type": "uint8_t",
+                        "description": "I2C数据引脚编号（仅I2C_MODE有效，如GPIO21）"
+                    },
+                    {
+                        "name": "scl_pin",
+                        "type": "uint8_t",
+                        "description": "I2C时钟引脚编号（仅I2C_MODE有效，如GPIO22）"
+                    },
+                    {
+                        "name": "spi_cs_pin",
+                        "type": "uint8_t",
+                        "description": "SPI片选引脚编号（仅SPI_MODE有效，如GPIO18）"
+                    },
+                    {
+                        "name": "i2c_addr",
+                        "type": "uint8_t",
+                        "description": "I2C设备地址（0x77=ADDR引脚高电平，0x76=低电平，仅I2C_MODE有效）"
+                    }
+                ]
+            },
+            {
+                "name": "spl06_set_osr",
+                "description": "设置气压/温度过采样率（影响精度与转换时间）",
+                "return_type": "SPL06_StatusTypeDef",
+                "parameters": [
+                    {
+                        "name": "pressure_osr",
+                        "type": "spl06_osr_t",
+                        "description": "气压过采样率（1x/2x/4x/8x/16x/32x/64x/128x）"
+                    },
+                    {
+                        "name": "temperature_osr",
+                        "type": "spl06_osr_t",
+                        "description": "温度过采样率（1x/2x/4x/8x/16x/32x/64x/128x）"
+                    }
+                ]
+            },
+            {
+                "name": "spl06_read_raw_pressure",
+                "description": "读取气压原始ADC值（未校准）",
+                "return_type": "SPL06_StatusTypeDef",
+                "parameters": [
+                    {
+                        "name": "raw_pressure",
+                        "type": "uint32_t*",
+                        "description": "输出参数（气压原始值，单位：LSB）"
+                    }
+                ]
+            },
+            {
+                "name": "spl06_read_raw_temperature",
+                "description": "读取温度原始ADC值（未校准）",
+                "return_type": "SPL06_StatusTypeDef",
+                "parameters": [
+                    {
+                        "name": "raw_temperature",
+                        "type": "uint32_t*",
+                        "description": "输出参数（温度原始值，单位：LSB）"
+                    }
+                ]
+            },
+            {
+                "name": "spl06_read_pressure",
+                "description": "读取校准后的气压值（单位：hPa）",
+                "return_type": "float",
+                "parameters": []
+            },
+            {
+                "name": "spl06_read_temperature",
+                "description": "读取校准后的温度值（单位：°C）",
+                "return_type": "float",
+                "parameters": []
+            },
+            {
+                "name": "spl06_calculate_altitude",
+                "description": "根据气压值计算海拔高度（需已知海平面气压）",
+                "return_type": "float",
+                "parameters": [
+                    {
+                        "name": "sea_level_pressure",
+                        "type": "float",
+                        "description": "海平面气压（单位：hPa）"
+                    }
+                ]
+            },
+            {
+                "name": "spl06_soft_reset",
+                "description": "通过写入RESET寄存器触发传感器软复位（恢复默认配置）",
+                "return_type": "SPL06_StatusTypeDef",
+                "parameters": []
+            },
+            {
+                "name": "spl06_set_standby_mode",
+                "description": "进入低功耗待机模式（停止测量）",
+                "return_type": "SPL06_StatusTypeDef",
+                "parameters": []
+            },
+            {
+                "name": "spl06_wake_up",
+                "description": "从待机模式唤醒至测量模式",
+                "return_type": "SPL06_StatusTypeDef",
+                "parameters": []
+            }
+        ],
+        "data_types": {
+            "spl06_comm_mode_t": [
+                "SPL06_I2C_MODE",
+                "SPL06_SPI_MODE"
+            ],
+            "spl06_osr_t": [
+                "SPL06_OSR_1X",
+                "SPL06_OSR_2X",
+                "SPL06_OSR_4X",
+                "SPL06_OSR_8X",
+                "SPL06_OSR_16X",
+                "SPL06_OSR_32X",
+                "SPL06_OSR_64X",
+                "SPL06_OSR_128X"
+            ],
+            "spl06_raw_data_t": {
+                "pressure_adc": "uint32_t",
+                "temperature_adc": "uint32_t"
+            }
+        },
+        "hardware_config": {
+            "comm_mode": "SPL06_I2C_MODE",
+            "i2c_port": 0,
+            "sda_pin": 21,
+            "scl_pin": 22,
+            "i2c_addr": "0x77",
+            "spi_cs_pin": 18,
+            "i2c_frequency": 100000,
+            "spi_frequency": 1000000,
+            "power_pin": -1,
+            "interrupt_pin": 19
+        },
+        "error_handling": {
+            "retry_count": 3,
+            "timeout_threshold": 200
+        }
+    }
+}

@@ -1,0 +1,228 @@
+{
+  "ADXl345_Interface": {
+    "status_enum": {
+      "adxl345_status_t": [
+        "ADXL345_OK",
+        "ADXL345_ERROR_I2C",
+        "ADXL345_ERROR_SPI",
+        "ADXL345_ERROR_REG_READ",
+        "ADXL345_ERROR_REG_WRITE",
+        "ADXL345_ERROR_TIMEOUT",
+        "ADXL345_ERROR_INVALID_PARAM",
+        "ADXL345_ERROR_NOT_INITIALIZED"
+      ]
+    },
+    "functions": [
+      {
+        "name": "adxl345_init",
+        "return_type": "adxl345_status_t",
+        "parameters": [
+          {
+            "name": "comm_mode",
+            "type": "adxl345_comm_mode_t",
+            "description": "通信模式（I2C_MODE/SPI_MODE）"
+          },
+          {
+            "name": "i2c_port",
+            "type": "uint8_t",
+            "description": "I2C端口号（仅I2C_MODE有效，如I2C_NUM_0）"
+          },
+          {
+            "name": "sda_pin",
+            "type": "uint8_t",
+            "description": "I2C数据引脚编号（仅I2C_MODE有效，如GPIO21）"
+          },
+          {
+            "name": "scl_pin",
+            "type": "uint8_t",
+            "description": "I2C时钟引脚编号（仅I2C_MODE有效，如GPIO22）"
+          },
+          {
+            "name": "i2c_addr",
+            "type": "uint8_t",
+            "description": "I2C设备地址（0x53=SDO引脚接地，0x1D=SDO引脚接VDD，仅I2C_MODE有效）"
+          },
+          {
+            "name": "spi_cs_pin",
+            "type": "uint8_t",
+            "description": "SPI片选引脚编号（仅SPI_MODE有效，如GPIO18）"
+          },
+          {
+            "name": "interrupt_pin",
+            "type": "int8_t",
+            "description": "中断引脚编号（-1=禁用，如GPIO24）"
+          }
+        ]
+      },
+      {
+        "name": "adxl345_set_range",
+        "return_type": "adxl345_status_t",
+        "parameters": [
+          {
+            "name": "range",
+            "type": "adxl345_range_t",
+            "description": "量程（2G/4G/8G/16G）"
+          }
+        ]
+      },
+      {
+        "name": "adxl345_set_data_rate",
+        "return_type": "adxl345_status_t",
+        "parameters": [
+          {
+            "name": "rate",
+            "type": "adxl345_data_rate_t",
+            "description": "数据速率（0.1HZ/0.2HZ/0.5HZ/1HZ/2HZ/5HZ/10HZ/20HZ/40HZ/80HZ/160HZ/320HZ/640HZ/1280HZ/2560HZ）"
+          }
+        ]
+      },
+      {
+        "name": "adxl345_set_power_mode",
+        "return_type": "adxl345_status_t",
+        "parameters": [
+          {
+            "name": "mode",
+            "type": "adxl345_power_mode_t",
+            "description": "功率模式（STANDBY/MEASUREMENT_LOW_POWER/MEASUREMENT_FULL_RESOLUTION）"
+          }
+        ]
+      },
+      {
+        "name": "adxl345_read_raw_data",
+        "return_type": "adxl345_status_t",
+        "parameters": [
+          {
+            "name": "x_raw",
+            "type": "int16_t*",
+            "description": "输出参数（X轴原始值，单位：LSB）"
+          },
+          {
+            "name": "y_raw",
+            "type": "int16_t*",
+            "description": "输出参数（Y轴原始值，单位：LSB）"
+          },
+          {
+            "name": "z_raw",
+            "type": "int16_t*",
+            "description": "输出参数（Z轴原始值，单位：LSB）"
+          }
+        ]
+      },
+      {
+        "name": "adxl345_read_acceleration",
+        "return_type": "adxl345_status_t",
+        "parameters": [
+          {
+            "name": "x",
+            "type": "float*",
+            "description": "输出参数（X轴加速度，单位：m/s²）"
+          },
+          {
+            "name": "y",
+            "type": "float*",
+            "description": "输出参数（Y轴加速度，单位：m/s²）"
+          },
+          {
+            "name": "z",
+            "type": "float*",
+            "description": "输出参数（Z轴加速度，单位：m/s²）"
+          }
+        ]
+      },
+      {
+        "name": "adxl345_set_tap_threshold",
+        "return_type": "adxl345_status_t",
+        "parameters": [
+          {
+            "name": "threshold",
+            "type": "uint8_t",
+            "description": "敲击检测阈值（0-255，对应0.0625g-16g）"
+          }
+        ]
+      },
+      {
+        "name": "adxl345_set_tap_duration",
+        "return_type": "adxl345_status_t",
+        "parameters": [
+          {
+            "name": "duration",
+            "type": "uint8_t",
+            "description": "敲击检测持续时间（0-255，单位：0.01s）"
+          }
+        ]
+      },
+      {
+        "name": "adxl345_soft_reset",
+        "return_type": "adxl345_status_t",
+        "parameters": []
+      },
+      {
+        "name": "adxl345_get_interrupt_status",
+        "return_type": "uint8_t",
+        "parameters": [],
+        "description": "获取中断标志位（位0=数据就绪，位1=单敲击，位2=双敲击，位3=活动检测，位4=静止检测）"
+      }
+    ],
+    "data_types": {
+      "adxl345_comm_mode_t": [
+        "ADXL345_I2C_MODE",
+        "ADXL345_SPI_MODE"
+      ],
+      "adxl345_range_t": [
+        "ADXL345_RANGE_2G",
+        "ADXL345_RANGE_4G",
+        "ADXL345_RANGE_8G",
+        "ADXL345_RANGE_16G"
+      ],
+      "adxl345_data_rate_t": [
+        "ADXL345_DATARATE_0_1HZ",
+        "ADXL345_DATARATE_0_2HZ",
+        "ADXL345_DATARATE_0_5HZ",
+        "ADXL345_DATARATE_1HZ",
+        "ADXL345_DATARATE_2HZ",
+        "ADXL345_DATARATE_5HZ",
+        "ADXL345_DATARATE_10HZ",
+        "ADXL345_DATARATE_20HZ",
+        "ADXL345_DATARATE_40HZ",
+        "ADXL345_DATARATE_80HZ",
+        "ADXL345_DATARATE_160HZ",
+        "ADXL345_DATARATE_320HZ",
+        "ADXL345_DATARATE_640HZ",
+        "ADXL345_DATARATE_1280HZ",
+        "ADXL345_DATARATE_2560HZ"
+      ],
+      "adxl345_power_mode_t": [
+        "ADXL345_POWER_STANDBY",
+        "ADXL345_POWER_MEASUREMENT_LOW_POWER",
+        "ADXL345_POWER_MEASUREMENT_FULL_RESOLUTION"
+      ],
+      "adxl345_raw_data_t": {
+        "x_raw": "int16_t",  
+        "y_raw": "int16_t",  
+        "z_raw": "int16_t"   
+      },
+      "adxl345_calib_param_t": {
+        "x_offset": "int16_t",  
+        "y_offset": "int16_t",  
+        "z_offset": "int16_t"   
+      }
+    },
+    "hardware_config": {
+      "comm_mode": "ADXL345_I2C_MODE",
+      "i2c_port": 0,
+      "sda_pin": 21,
+      "scl_pin": 22,
+      "i2c_addr": "0x53",
+      "spi_cs_pin": 18,
+      "interrupt_pin": 24,
+      "default_range": "ADXL345_RANGE_2G",
+      "default_data_rate": "ADXL345_DATARATE_100HZ",
+      "default_power_mode": "ADXL345_POWER_MEASUREMENT_FULL_RESOLUTION"
+    },
+    "error_handling": {
+      "retry_count": 3,
+      "timeout_threshold": 100
+    },
+    "calibration_note": "ADXL345支持用户校准，通过读取原始数据并计算偏移量（x_offset=y_offset=z_offset=0时为出厂校准）。敲击检测和活动/静止检测依赖内部阈值寄存器，用户可通过set_tap_threshold和set_tap_duration配置敏感度。"
+  }
+}

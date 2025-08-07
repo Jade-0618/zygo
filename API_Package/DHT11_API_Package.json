@@ -1,0 +1,84 @@
+{
+  "DHT11_Interface": {
+    "status_enum": {
+      "DHT11_StatusTypeDef": [
+        "DHT11_OK",
+        "DHT11_ERROR_TIMEOUT",
+        "DHT11_ERROR_CHECKSUM"
+      ]
+    },
+    "functions": [
+      {
+        "name": "DHT11_Init",
+        "description": "初始化传感器硬件接口",
+        "return_type": "DHT11_StatusTypeDef",
+        "parameters": []
+      },
+      {
+        "name": "DHT11_ReadData",
+        "description": "读取完整温湿度数据",
+        "return_type": "DHT11_StatusTypeDef",
+        "parameters": [
+          {
+            "name": "temperature",
+            "type": "uint8_t*",
+            "description": "存储温度整数部分（摄氏度）"
+          },
+          {
+            "name": "humidity",
+            "type": "uint8_t*",
+            "description": "存储湿度整数部分（%RH）"
+          }
+        ]
+      },
+      {
+        "name": "DHT11_IO_OUT",
+        "description": "配置GPIO为输出模式",
+        "return_type": "void",
+        "parameters": []
+      },
+      {
+        "name": "DHT11_IO_IN",
+        "description": "配置GPIO为输入模式",
+        "return_type": "void",
+        "parameters": []
+      },
+      {
+        "name": "DHT11_RST",
+        "description": "生成复位信号时序",
+        "return_type": "void",
+        "parameters": []
+      },
+      {
+        "name": "Dht11_Check",
+        "description": "检测传感器响应信号",
+        "return_type": "uint8_t",
+        "parameters": []
+      },
+      {
+        "name": "Dht11_ReadBit",
+        "description": "读取单bit数据",
+        "return_type": "uint8_t",
+        "parameters": []
+      },
+      {
+        "name": "Dht11_ReadByte",
+        "description": "读取单字节数据",
+        "return_type": "uint8_t",
+        "parameters": []
+      }
+    ],
+    "hardware_macros": [
+      {
+        "name": "DHT11_GPIO_PORT",
+        "value": "GPIOD",
+        "description": "传感器连接的GPIO端口"
+      },
+      {
+        "name": "DHT11_DATA_PIN",
+        "value": "GPIO_PIN_11",
+        "description": "传感器数据引脚定义"
+      }
+    ]
+  }
+}

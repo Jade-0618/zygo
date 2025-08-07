@@ -1,0 +1,131 @@
+{
+  "BSR2046K_Interface": {
+    "status_enum": {
+      "bsr2046k_1_status_t": [
+        "BSR2046K_1_OK",
+        "BSR2046K_1_ERROR_I2C",
+        "BSR2046K_1_ERROR_TIMEOUT",
+        "BSR2046K_1_ERROR_INVALID_DATA",
+        "BSR2046K_1_ERROR_NOT_INITIALIZED",
+        "BSR2046K_1_ERROR_DISPLAY_OVERRUN",
+        "BSR2046K_1_ERROR_BRIGHTNESS_OUT_OF_RANGE"
+      ]
+    },
+    "functions": [
+      {
+        "name": "bsr2046k_1_init",
+        "return_type": "bsr2046k_1_status_t",
+        "parameters": [
+          {
+            "name": "i2c_port",
+            "type": "i2c_port_t",
+            "description": "I2C端口号（如I2C_NUM_0）"
+          },
+          {
+            "name": "i2c_addr",
+            "type": "uint8_t",
+            "description": "I2C设备地址（0x20-0x27，默认0x20）"
+          },
+          {
+            "name": "i2c_clk_hz",
+            "type": "uint32_t",
+            "description": "I2C时钟频率（单位：Hz，默认100000）"
+          },
+          {
+            "name": "brightness",
+            "type": "uint8_t",
+            "description": "初始亮度（0-100%，默认50%）"
+          }
+        ]
+      },
+      {
+        "name": "bsr2046k_1_display_number",
+        "return_type": "bsr2046k_1_status_t",
+        "parameters": [
+          {
+            "name": "position",
+            "type": "uint8_t",
+            "description": "显示位置（0-7，对应8位数码管）"
+          },
+          {
+            "name": "number",
+            "type": "uint8_t",
+            "description": "要显示的数字（0-9）"
+          },
+          {
+            "name": "dot",
+            "type": "bool",
+            "description": "是否点亮小数点（true=点亮，false=关闭）"
+          }
+        ]
+      },
+      {
+        "name": "bsr2046k_1_display_char",
+        "return_type": "bsr2046k_1_status_t",
+        "parameters": [
+          {
+            "name": "position",
+            "type": "uint8_t",
+            "description": "显示位置（0-7）"
+          },
+          {
+            "name": "char_code",
+            "type": "uint8_t",
+            "description": "字符编码（ASCII码，支持自定义字符）"
+          }
+        ]
+      },
+      {
+        "name": "bsr2046k_1_clear",
+        "return_type": "bsr2046k_1_status_t",
+        "parameters": []
+      },
+      {
+        "name": "bsr2046k_1_set_brightness",
+        "return_type": "bsr2046k_1_status_t",
+        "parameters": [
+          {
+            "name": "brightness",
+            "type": "uint8_t",
+            "description": "亮度值（0-100%）"
+          }
+        ]
+      },
+      {
+        "name": "bsr2046k_1_shutdown",
+        "return_type": "bsr2046k_1_status_t",
+        "parameters": []
+      },
+      {
+        "name": "bsr2046k_1_wakeup",
+        "return_type": "bsr2046k_1_status_t",
+        "parameters": []
+      }
+    ],
+    "data_types": {
+      "bsr2046k_1_display_buffer_t": {
+        "buffer": "uint8_t[8]"
+      },
+      "bsr2046k_1_bright_param_t": {
+        "brightness": "uint8_t"
+      }
+    },
+    "hardware_config": {
+      "default_i2c_port": "I2C_NUM_0",
+      "default_i2c_addr": "0x20",
+      "default_i2c_clk_hz": 100000,
+      "default_brightness": 50,
+      "brightness_range": {
+        "min": 0,
+        "max": 100
+      },
+      "segment_count": 7,
+      "max_positions": 8,
+      "active_level": "LOW"
+    },
+    "error_handling": {
+      "retry_count": 3,
+      "timeout_threshold_ms": 200
+    }
+  }
+}

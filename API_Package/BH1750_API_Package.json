@@ -1,0 +1,96 @@
+{
+    "BH1750_Interface": {
+    "status_enum": {
+      "BH1750_StatusTypeDef": [
+        "BH1750_OK",
+        "BH1750_ERROR_TIMEOUT",
+        "BH1750_ERROR_I2C",
+        "BH1750_ERROR_NOT_RESPONDING"
+      ]
+    },
+    "functions": [
+      {
+        "name": "bh1750_init",
+        "description": "初始化传感器并配置I2C接口",
+        "return_type": "BH1750_StatusTypeDef",
+        "parameters": [
+          {
+            "name": "i2c_port",
+            "type": "i2c_port_t",
+            "description": "I2C端口号(ESP32对应I2C_NUM_0/I2C_NUM_1)"
+          },
+          {
+            "name": "sda_pin",
+            "type": "gpio_num_t",
+            "description": "SDA引脚编号"
+          },
+          {
+            "name": "scl_pin",
+            "type": "gpio_num_t",
+            "description": "SCL引脚编号"
+          },
+          {
+            "name": "addr_pin_state",
+            "type": "bool",
+            "description": "ADDR引脚电平状态(true=高电平，false=低电平)"
+          }
+        ]
+      },
+      {
+        "name": "bh1750_set_mode",
+        "description": "设置传感器测量模式",
+        "return_type": "BH1750_StatusTypeDef",
+        "parameters": [
+          {
+            "name": "mode",
+            "type": "bh1750_mode_t",
+            "description": "测量模式枚举值"
+          }
+        ]
+      },
+      {
+        "name": "bh1750_read_lux",
+        "description": "读取光照强度值",
+        "return_type": "float",
+        "parameters": []
+      },
+      {
+        "name": "bh1750_power_down",
+        "description": "进入低功耗模式",
+        "return_type": "BH1750_StatusTypeDef",
+        "parameters": []
+      },
+      {
+        "name": "bh1750_reset",
+        "description": "软件复位传感器",
+        "return_type": "BH1750_StatusTypeDef",
+        "parameters": []
+      }
+    ],
+    "data_types": {
+      "bh1750_mode_t": [
+        "BH1750_CONTINUOUS_HIGH_RES_MODE",
+        "BH1750_CONTINUOUS_HIGH_RES_MODE_2",
+        "BH1750_CONTINUOUS_LOW_RES_MODE",
+        "BH1750_ONE_TIME_HIGH_RES_MODE",
+        "BH1750_ONE_TIME_HIGH_RES_MODE_2",
+        "BH1750_ONE_TIME_LOW_RES_MODE"
+        ]
+    },
+    "hardware_config": {
+      "i2c_frequency": 100000,
+      "default_address": {
+        "ADDR_LOW": "0x23",
+        "ADDR_HIGH": "0x5C"
+      },
+      "measurement_time": {
+        "HIGH_RES_MODE": 120,
+        "LOW_RES_MODE": 16
+      }
+    },
+    "error_handling": {
+      "retry_count": 3,
+      "timeout_threshold": 200
+    }
+  }
+}

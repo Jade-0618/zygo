@@ -1,0 +1,136 @@
+{
+  "mpx5700ap": {
+    "status_enum": {
+      "mpx5700ap_status_t": [
+        "MPX5700AP_OK",
+        "MPX5700AP_ERROR_ADC",
+        "MPX5700AP_ERROR_TIMEOUT",
+        "MPX5700AP_ERROR_INVALID_CHANNEL",
+        "MPX5700AP_ERROR_CALIBRATION_FAILED",
+        "MPX5700AP_ERROR_NOT_INITIALIZED"
+      ]
+    },
+    "functions": [
+      {
+        "name": "mpx5700ap_init",
+        "return_type": "mpx5700ap_status_t",
+        "parameters": [
+          {
+            "name": "adc_channel",
+            "type": "uint8_t",
+            "description": "ADC通道号（ESP32-S3支持ADC1/ADC2，如0-17对应ADC1_CH0-ADC1_CH17）"
+          },
+          {
+            "name": "ref_voltage_mv",
+            "type": "uint16_t",
+            "description": "ADC参考电压（单位：mV，默认3300mV对应ESP32-S3内部3.3V）"
+          },
+          {
+            "name": "sampling_time_us",
+            "type": "uint32_t",
+            "description": "ADC采样时间（单位：μs，默认100μs）"
+          },
+          {
+            "name": "power_pin",
+            "type": "int8_t",
+            "description": "电源控制引脚（-1=禁用，如GPIO12用于传感器供电）"
+          }
+        ]
+      },
+      {
+        "name": "mpx5700ap_read_raw",
+        "return_type": "mpx5700ap_status_t",
+        "parameters": [
+          {
+            "name": "raw_value",
+            "type": "uint16_t*",
+            "description": "输出参数（传感器原始ADC值，12位分辨率，范围0-4095）"
+          }
+        ]
+      },
+      {
+        "name": "mpx5700ap_read_pressure",
+        "return_type": "mpx5700ap_status_t",
+        "parameters": [
+          {
+            "name": "pressure_kpa",
+            "type": "float*",
+            "description": "输出参数（压力值，单位：kPa）"
+          }
+        ]
+      },
+      {
+        "name": "mpx5700ap_calibrate_zero",
+        "return_type": "mpx5700ap_status_t",
+        "parameters": [
+          {
+            "name": "zero_pressure_kpa",
+            "type": "float",
+            "description": "零压力校准值（单位：kPa，默认0kPa）"
+          }
+        ]
+      },
+      {
+        "name": "mpx5700ap_calibrate_full_scale",
+        "return_type": "mpx5700ap_status_t",
+        "parameters": [
+          {
+            "name": "full_scale_pressure_kpa",
+            "type": "float",
+            "description": "满量程校准值（单位：kPa，默认100kPa）"
+          }
+        ]
+      },
+      {
+        "name": "mpx5700ap_set_sampling_time",
+        "return_type": "mpx5700ap_status_t",
+        "parameters": [
+          {
+            "name": "sampling_time_us",
+            "type": "uint32_t",
+            "description": "新的采样时间（单位：μs）"
+          }
+        ]
+      },
+      {
+        "name": "mpx5700ap_power_on",
+        "return_type": "mpx5700ap_status_t",
+        "parameters": []
+      },
+      {
+        "name": "mpx5700ap_power_off",
+        "return_type": "mpx5700ap_status_t",
+        "parameters": []
+      }
+    ],
+    "data_types": {
+      "mpx5700ap_adc_channel_t": {
+        "description": "ADC通道类型（对应ESP32-S3 ADC通道号）",
+        "values": ["ADC1_CH0", "ADC1_CH1",  "ADC1_CH17"]  
+      },
+      "mpx5700ap_raw_data_t": {
+        "raw_adc": "uint16_t"  
+      },
+      "mpx5700ap_calib_param_t": {
+        "zero_offset": "float",       
+        "full_scale_gain": "float"    
+      }
+    },
+    "hardware_config": {
+      "default_adc_channel": 0,       
+      "default_ref_voltage_mv": 3300, 
+      "default_sampling_time_us": 100, 
+      "power_pin": -1,                
+      "sensor_output_range": {
+        "min_voltage_mv": 500,        
+        "max_voltage_mv": 4500        
+      },
+      "default_full_scale_kpa": 100   
+    },
+    "error_handling": {
+      "retry_count": 3,               
+      "timeout_threshold": 200        
+    },
+    "calibration_note": "MPX5700AP为线性输出压力传感器，校准需通过两点校准：1. 零压力（如暴露于真空）时记录原始值并设置zero_offset；2. 满量程压力（如100kPa）时记录原始值并计算full_scale_gain（gain=(full_scale_pressure - zero_pressure)/(full_scale_raw - zero_raw)）。实际压力计算公式：pressure_kpa = (raw_value - zero_offset) * full_scale_gain。"
+  }
+}

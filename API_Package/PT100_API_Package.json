@@ -1,0 +1,104 @@
+{
+  "PT100_Interface": {
+    "status_enum": {
+      "pt100_status_t": [
+        "PT100_OK",
+        "PT100_ERROR_ADC",
+        "PT100_ERROR_TIMEOUT",
+        "PT100_ERROR_CRC",
+        "PT100_ERROR_INVALID_DATA",
+        "PT100_ERROR_NOT_INITIALIZED",
+        "PT100_ERROR_OVER_TEMPERATURE",
+        "PT100_ERROR_UNDER_TEMPERATURE"
+      ]
+    },
+    "functions": [
+      {
+        "name": "pt100_init",
+        "return_type": "pt100_status_t",
+        "parameters": [
+          {"name": "adc_channel", "type": "uint8_t", "description": "ADC通道号（ESP32-S3支持ADC1/ADC2，如0-17对应ADC1_CH0-ADC1_CH17）"},
+          {"name": "ref_voltage_mv", "type": "uint16_t", "description": "ADC参考电压（单位：mV，默认3300mV对应ESP32-S3内部3.3V）"},
+          {"name": "sampling_time_us", "type": "uint32_t", "description": "ADC采样时间（单位：μs，默认100μs）"},
+          {"name": "current_source_ma", "type": "uint8_t", "description": "恒流源电流（单位：mA，用于激励PT100，默认1mA）"},
+          {"name": "power_pin", "type": "int8_t", "description": "电源控制引脚（-1=禁用，如GPIO12用于外部供电）"}
+        ]
+      },
+      {
+        "name": "pt100_read_temperature",
+        "return_type": "pt100_status_t",
+        "parameters": [
+          {"name": "temperature_c", "type": "float*", "description": "输出参数（温度值，单位：°C）"}
+        ]
+      },
+      {
+        "name": "pt100_read_resistance",
+        "return_type": "pt100_status_t",
+        "parameters": [
+          {"name": "resistance_ohm", "type": "float*", "description": "输出参数（PT100电阻值，单位：Ω）"}
+        ]
+      },
+      {
+        "name": "pt100_set_reference_resistance",
+        "return_type": "pt100_status_t",
+        "parameters": [
+          {"name": "ref_ohm", "type": "float", "description": "参考电阻值（单位：Ω，默认100Ω对应PT100在0°C时的阻值）"}
+        ]
+      },
+      {
+        "name": "pt100_calibrate_zero",
+        "return_type": "pt100_status_t",
+        "parameters": [
+          {"name": "zero_temp_c", "type": "float", "description": "零温度校准值（单位：°C，默认0°C）"},
+          {"name": "zero_resistance_ohm", "type": "float", "description": "零温度下的电阻值（单位：Ω，默认100Ω）"}
+        ]
+      },
+      {
+        "name": "pt100_calibrate_full_scale",
+        "return_type": "pt100_status_t",
+        "parameters": [
+          {"name": "full_scale_temp_c", "type": "float", "description": "满量程校准温度（单位：°C，默认850°C）"},
+          {"name": "full_scale_resistance_ohm", "type": "float", "description": "满量程温度下的电阻值（单位：Ω，默认142.2Ω）"}
+        ]
+      },
+      {
+        "name": "pt100_power_on",
+        "return_type": "pt100_status_t",
+        "parameters": []
+      },
+      {
+        "name": "pt100_power_off",
+        "return_type": "pt100_status_t",
+        "parameters": []
+      }
+    ],
+    "data_types": {
+      "pt100_raw_data_t": {
+        "raw_adc": "uint16_t"  
+      },
+      "pt100_calib_param_t": {
+        "zero_temp_c": "float",       
+        "zero_resistance_ohm": "float", 
+        "full_scale_temp_c": "float",  
+        "full_scale_resistance_ohm": "float"  
+      }
+    },
+    "hardware_config": {
+      "default_adc_channel": 0,       
+      "default_ref_voltage_mv": 3300, 
+      "default_sampling_time_us": 100, 
+      "default_current_source_ma": 1,  
+      "power_pin": -1,                
+      "measurement_range_c": {        
+        "min": -200,
+        "max": 850
+      },
+      "default_full_scale_c": 850     
+    },
+    "error_handling": {
+      "retry_count": 3,               
+      "timeout_threshold": 500        
+    },
+    "note": "PT100为铂电阻温度传感器，基于RTD（电阻温度探测器）原理，0°C时阻值为100Ω，温度每升高1°C阻值约增加0.385Ω。通过恒流源激励测量电压，经ADC转换为数字信号后计算温度。需通过两点校准（如0°C和850°C）修正非线性误差。校准参数存储于pt100_calib_param_t结构体中，实际温度计算公式：temperature_c = ((measured_resistance - zero_resistance) / (full_scale_resistance - zero_resistance)) * (full_scale_temp - zero_temp) + zero_temp。"
+  }
+}

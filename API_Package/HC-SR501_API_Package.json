@@ -1,0 +1,126 @@
+{
+  "HC_SR501_Interface": {
+    "status_enum": {
+      "HC_SR501_StatusTypeDef": [
+        "HC_SR501_OK",
+        "HC_SR501_ERROR_PIN_CONFIG",
+        "HC_SR501_ERROR_ANALOG_READ",
+        "HC_SR501_ERROR_DELAY_OUT_OF_RANGE",
+        "HC_SR501_ERROR_SIGNAL_NOISE"
+      ]
+    },
+    "functions": [
+      {
+        "name": "hc_sr501_init",
+        "description": "初始化HC-SR501（配置GPIO模式+预热）",
+        "return_type": "HC_SR501_StatusTypeDef",
+        "parameters": [
+          {
+            "name": "mode",
+            "type": "hc_sr501_mode_t",
+            "description": "工作模式（数字/模拟）"
+          },
+          {
+            "name": "detect_pin",
+            "type": "uint8_t",
+            "description": "检测信号输出引脚（GPIO编号，如GPIO12）"
+          },
+          {
+            "name": "adc_channel",
+            "type": "adc1_channel_t",
+            "description": "模拟模式下的ADC通道（仅ANALOG_MODE有效，如ADC1_CHANNEL_4）"
+          },
+          {
+            "name": "pull_up_en",
+            "type": "bool",
+            "description": "数字模式是否启用内部上拉（true=启用，适用于OUT低电平有效场景）"
+          }
+        ]
+      },
+      {
+        "name": "hc_sr501_set_sensitivity",
+        "description": "设置检测灵敏度（调节模块内部电位器，仅部分版本支持）",
+        "return_type": "HC_SR501_StatusTypeDef",
+        "parameters": [
+          {
+            "name": "level",
+            "type": "uint8_t",
+            "description": "灵敏度等级（0-3级，0=最低，3=最高）"
+          }
+        ]
+      },
+      {
+        "name": "hc_sr501_set_delay",
+        "description": "设置检测延迟时间（OUT引脚高电平持续时间）",
+        "return_type": "HC_SR501_StatusTypeDef",
+        "parameters": [
+          {
+            "name": "delay_ms",
+            "type": "uint16_t",
+            "description": "延迟时间（ms，0-10000）"
+          }
+        ]
+      },
+      {
+        "name": "hc_sr501_read_status",
+        "description": "读取当前检测状态（数字模式返回高低电平，模拟模式返回电压值）",
+        "return_type": "HC_SR501_StatusTypeDef",
+        "parameters": [
+          {
+            "name": "raw_output",
+            "type": "bool",
+            "description": "是否返回原始信号（true=原始值，false=状态标志）"
+          },
+          {
+            "name": "detected",
+            "type": "bool*",
+            "description": "输出参数（仅raw_output=false时有效，检测到人体为true）"
+          },
+          {
+            "name": "raw_signal",
+            "type": "hc_sr501_raw_signal_t*",
+            "description": "输出参数（仅raw_output=true时有效，存储电压/强度）"
+          }
+        ]
+      },
+      {
+        "name": "hc_sr501_get_last_detect_time",
+        "description": "获取最后一次检测到人体的时间戳（用于事件记录）",
+        "return_type": "HC_SR501_StatusTypeDef",
+        "parameters": [
+          {
+            "name": "timestamp",
+            "type": "uint32_t*",
+            "description": "输出参数（时间戳，单位：ms）"
+          }
+        ]
+      },
+      {
+        "name": "hc_sr501_reset",
+        "description": "复位传感器（恢复默认灵敏度/延迟时间配置）",
+        "return_type": "HC_SR501_StatusTypeDef",
+        "parameters": []
+      }
+    ],
+    "data_types": {
+      "hc_sr501_mode_t": [
+        "HC_SR501_DIGITAL_MODE",  
+        "HC_SR501_ANALOG_MODE"    
+      ],
+      "hc_sr501_raw_signal_t": {
+        "signal_voltage": "float",    
+        "signal_strength": "uint8_t"  
+      }
+    },
+    "hardware_config": {
+      "detect_pin": 12,              
+      "mode": "HC_SR501_DIGITAL_MODE", 
+      "pull_up_en": true,            
+      "adc_channel": "ADC1_CHANNEL_4" 
+    },
+    "error_handling": {
+      "retry_count": 3,              
+      "timeout_threshold": 100       
+    }
+  }
+}

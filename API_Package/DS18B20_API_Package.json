@@ -1,0 +1,82 @@
+{
+  "DS18B20_Interface": {
+    "status_enum": {
+      "ds18b20_status_t": [
+        "DS18B20_OK",
+        "DS18B20_ERROR_1WIRE",
+        "DS18B20_ERROR_TIMEOUT",
+        "DS18B20_ERROR_CRC",
+        "DS18B20_ERROR_NOT_FOUND",
+        "DS18B20_ERROR_INVALID_RESOLUTION"
+      ]
+    },
+    "functions": [
+      {
+        "name": "ds18b20_init",
+        "return_type": "ds18b20_status_t",
+        "parameters": [
+          {"name": "one_wire_pin", "type": "uint8_t", "description": "1-Wire总线数据引脚编号（如GPIO4）"},
+          {"name": "parasitic_power", "type": "bool", "description": "是否启用寄生电源模式（true=启用，false=外部供电）"},
+          {"name": "resolution", "type": "uint8_t", "description": "温度分辨率（0-15，对应9-12位精度，默认12位）"}
+        ]
+      },
+      {
+        "name": "ds18b20_read_temperature",
+        "return_type": "ds18b20_status_t",
+        "parameters": [
+          {"name": "temperature", "type": "float*", "description": "输出参数（温度值，单位：°C）"}
+        ]
+      },
+      {
+        "name": "ds18b20_set_resolution",
+        "return_type": "ds18b20_status_t",
+        "parameters": [
+          {"name": "resolution", "type": "uint8_t", "description": "新分辨率（0-15，对应9-12位精度）"}
+        ]
+      },
+      {
+        "name": "ds18b20_start_conversion",
+        "return_type": "ds18b20_status_t",
+        "parameters": []
+      },
+      {
+        "name": "ds18b20_reset",
+        "return_type": "ds18b20_status_t",
+        "parameters": []
+      },
+      {
+        "name": "ds18b20_read_rom",
+        "return_type": "ds18b20_status_t",
+        "parameters": [
+          {"name": "rom_id", "type": "uint64_t*", "description": "输出参数（传感器64位ROM码）"}
+        ]
+      }
+    ],
+    "data_types": {
+      "ds18b20_raw_data_t": {
+        "raw_temperature": "int16_t"  
+      },
+      "ds18b20_calib_param_t": {
+        "offset": "float"            
+      }
+    },
+    "hardware_config": {
+      "default_one_wire_pin": 4,      
+      "parasitic_power": false,       
+      "default_resolution": 12,       
+      "conversion_time_ms": {         
+        "9": 93,
+        "10": 187,
+        "11": 375,
+        "12": 750
+      },
+      "max_retry_count": 3,           
+      "crc_check_enable": true        
+    },
+    "error_handling": {
+      "retry_count": 3,               
+      "timeout_threshold": 1000       
+    },
+    "note": "DS18B20通过单总线（1-Wire）与ESP32-S3通信，支持寄生电源模式（需外部上拉电阻）。温度值通过16位原始数据转换，分辨率由初始化参数决定（9-12位）。校准通过offset参数实现，用于补偿硬件误差。"
+  }
+}

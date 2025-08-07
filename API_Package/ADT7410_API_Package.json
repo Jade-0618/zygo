@@ -1,0 +1,115 @@
+{
+  "ADT7410_Interface": {
+    "status_enum": {
+      "adt7410_status_t": [
+        "ADT7410_OK",
+        "ADT7410_ERROR_I2C",
+        "ADT7410_ERROR_TIMEOUT",
+        "ADT7410_ERROR_INVALID_DATA",
+        "ADT7410_ERROR_NOT_INITIALIZED",
+        "ADT7410_ERROR_CALIBRATION_FAIL",
+        "ADT7410_ERROR_OVER_TEMPERATURE",
+        "ADT7410_ERROR_UNDER_TEMPERATURE"
+      ]
+    },
+    "functions": [
+      {
+        "name": "adt7410_init",
+        "return_type": "adt7410_status_t",
+        "parameters": [
+          {"name": "i2c_port", "type": "uint8_t", "description": "I2C端口号（如I2C_NUM_0）"},
+          {"name": "i2c_addr", "type": "uint8_t", "description": "I2C设备地址（0x48/0x49，默认0x48）"},
+          {"name": "i2c_clk_hz", "type": "uint32_t", "description": "I2C时钟频率（单位：Hz，默认100000）"},
+          {"name": "power_pin", "type": "int8_t", "description": "电源控制引脚（-1=禁用，默认-1）"},
+          {"name": "reset_pin", "type": "int8_t", "description": "复位引脚（-1=禁用，默认-1）"}
+        ]
+      },
+      {
+        "name": "adt7410_read_temperature",
+        "return_type": "adt7410_status_t",
+        "parameters": [
+          {"name": "temperature_c", "type": "float*", "description": "输出参数（温度值，单位：°C）"}
+        ]
+      },
+      {
+        "name": "adt7410_read_raw_data",
+        "return_type": "adt7410_status_t",
+        "parameters": [
+          {"name": "raw_data", "type": "int16_t*", "description": "输出参数（16位原始温度数据）"}
+        ]
+      },
+      {
+        "name": "adt7410_set_conversion_time",
+        "return_type": "adt7410_status_t",
+        "parameters": [
+          {"name": "time_ms", "type": "uint8_t", "description": "转换时间（单位：ms，可选值：0.5/1/2/4/8/16/32/64/128/256/512/1024/2048/4096/8192）"}
+        ]
+      },
+      {
+        "name": "adt7410_set_operating_mode",
+        "return_type": "adt7410_status_t",
+        "parameters": [
+          {"name": "mode", "type": "uint8_t", "description": "工作模式（0=连续转换，1=单次转换后掉电）"}
+        ]
+      },
+      {
+        "name": "adt7410_set_interrupt",
+        "return_type": "adt7410_status_t",
+        "parameters": [
+          {"name": "enable", "type": "bool", "description": "使能中断（true=启用，false=禁用）"},
+          {"name": "threshold_high", "type": "float", "description": "高温阈值（单位：°C，默认85°C）"},
+          {"name": "threshold_low", "type": "float", "description": "低温阈值（单位：°C，默认-40°C）"}
+        ]
+      },
+      {
+        "name": "adt7410_calibrate",
+        "return_type": "adt7410_status_t",
+        "parameters": [
+          {"name": "offset", "type": "float", "description": "温度偏移校准值（单位：°C，默认0）"}
+        ]
+      },
+      {
+        "name": "adt7410_soft_reset",
+        "return_type": "adt7410_status_t",
+        "parameters": []
+      },
+      {
+        "name": "adt7410_power_down",
+        "return_type": "adt7410_status_t",
+        "parameters": []
+      },
+      {
+        "name": "adt7410_wake_up",
+        "return_type": "adt7410_status_t",
+        "parameters": []
+      }
+    ],
+    "data_types": {
+      "adt7410_raw_data_t": {
+        "raw_value": "int16_t"
+      },
+      "adt7410_calib_param_t": {
+        "offset": "float"
+      }
+    },
+    "hardware_config": {
+      "default_i2c_port": "I2C_NUM_0",
+      "default_i2c_addr": "0x48",
+      "default_i2c_clk_hz": 100000,
+      "default_conversion_time": 10,
+      "default_operating_mode": 0,
+      "power_pin": -1,
+      "reset_pin": -1,
+      "temp_range_degc": {
+        "min": -55,
+        "max": 150
+      },
+      "base_resolution_degc": 0.0625
+    },
+    "error_handling": {
+      "retry_count": 3,
+      "timeout_threshold_ms": 200
+    },
+    "note": "ADT7410为高精度数字温度传感器，支持I2C接口（0x48/0x49），测量范围-55°C~150°C，分辨率0.0625°C（16位）。通过可编程转换时间（0.5ms~8.25ms）和单次/连续模式优化功耗。温度数据存储于0x50寄存器（16位有符号整数），计算公式：temperature_c = (raw_value >> 4) * 0.0625。支持中断功能（高温/低温阈值触发）和掉电模式，校准通过offset参数修正系统误差。"
+  }
+}

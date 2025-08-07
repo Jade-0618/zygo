@@ -1,0 +1,343 @@
+{
+  "BNO055_Interface": {
+    "status_enum": {
+      "bno055_status_t": [
+        "BNO055_OK",
+        "BNO055_ERROR_I2C",
+        "BNO055_ERROR_SPI",
+        "BNO055_ERROR_TIMEOUT",
+        "BNO055_ERROR_INVALID_PARAM",
+        "BNO055_ERROR_NOT_INITIALIZED",
+        "BNO055_ERROR_CALIBRATION_IN_PROGRESS",
+        "BNO055_ERROR_SENSOR_NOT_RESPONDING"
+      ]
+    },
+    "functions": [
+      {
+        "name": "bno055_init",
+        "description": "初始化传感器并配置通信接口",
+        "return_type": "bno055_status_t",
+        "parameters": [
+          {
+            "name": "comm_mode",
+            "type": "bno055_comm_mode_t",
+            "description": "通信模式（I2C_MODE/SPI_MODE）"
+          },
+          {
+            "name": "i2c_port",
+            "type": "uint8_t",
+            "description": "I2C端口号（仅I2C_MODE有效，如I2C_NUM_0）"
+          },
+          {
+            "name": "sda_pin",
+            "type": "uint8_t",
+            "description": "I2C数据引脚编号（仅I2C_MODE有效，如GPIO21）"
+          },
+          {
+            "name": "scl_pin",
+            "type": "uint8_t",
+            "description": "I2C时钟引脚编号（仅I2C_MODE有效，如GPIO22）"
+          },
+          {
+            "name": "spi_cs_pin",
+            "type": "uint8_t",
+            "description": "SPI片选引脚编号（仅SPI_MODE有效，如GPIO18）"
+          },
+          {
+            "name": "addr_pin_state",
+            "type": "bool",
+            "description": "ADDR引脚电平状态（true=高电平，false=低电平，默认0x28）"
+          },
+          {
+            "name": "interrupt_pin",
+            "type": "int8_t",
+            "description": "中断引脚编号（-1=禁用，如GPIO24）"
+          }
+        ]
+      },
+      {
+        "name": "bno055_set_operation_mode",
+        "description": "设置传感器工作模式（决定可用传感器数据）",
+        "return_type": "bno055_status_t",
+        "parameters": [
+          {
+            "name": "mode",
+            "type": "bno055_operation_mode_t",
+            "description": "操作模式枚举值（如ACCONLY/NDOF等）"
+          }
+        ]
+      },
+      {
+        "name": "bno055_read_acceleration",
+        "description": "读取三轴加速度数据",
+        "return_type": "bno055_status_t",
+        "parameters": [
+          {
+            "name": "x",
+            "type": "float*",
+            "description": "输出参数（X轴加速度，单位：m/s²）"
+          },
+          {
+            "name": "y",
+            "type": "float*",
+            "description": "输出参数（Y轴加速度，单位：m/s²）"
+          },
+          {
+            "name": "z",
+            "type": "float*",
+            "description": "输出参数（Z轴加速度，单位：m/s²）"
+          }
+        ]
+      },
+      {
+        "name": "bno055_read_gyroscope",
+        "description": "读取三轴角速度数据",
+        "return_type": "bno055_status_t",
+        "parameters": [
+          {
+            "name": "x",
+            "type": "float*",
+            "description": "输出参数（X轴角速度，单位：°/s）"
+          },
+          {
+            "name": "y",
+            "type": "float*",
+            "description": "输出参数（Y轴角速度，单位：°/s）"
+          },
+          {
+            "name": "z",
+            "type": "float*",
+            "description": "输出参数（Z轴角速度，单位：°/s）"
+          }
+        ]
+      },
+      {
+        "name": "bno055_read_magnetometer",
+        "description": "读取三轴磁场数据",
+        "return_type": "bno055_status_t",
+        "parameters": [
+          {
+            "name": "x",
+            "type": "float*",
+            "description": "输出参数（X轴磁场，单位：μT）"
+          },
+          {
+            "name": "y",
+            "type": "float*",
+            "description": "输出参数（Y轴磁场，单位：μT）"
+          },
+          {
+            "name": "z",
+            "type": "float*",
+            "description": "输出参数（Z轴磁场，单位：μT）"
+          }
+        ]
+      },
+      {
+        "name": "bno055_read_euler_angle",
+        "description": "读取欧拉角（航向/俯仰/横滚）",
+        "return_type": "bno055_status_t",
+        "parameters": [
+          {
+            "name": "heading",
+            "type": "float*",
+            "description": "输出参数（航向角，单位：°）"
+          },
+          {
+            "name": "pitch",
+            "type": "float*",
+            "description": "输出参数（俯仰角，单位：°）"
+          },
+          {
+            "name": "roll",
+            "type": "float*",
+            "description": "输出参数（横滚角，单位：°）"
+          }
+        ]
+      },
+      {
+        "name": "bno055_read_quaternion",
+        "description": "读取四元数数据",
+        "return_type": "bno055_status_t",
+        "parameters": [
+          {
+            "name": "w",
+            "type": "float*",
+            "description": "输出参数（四元数w分量）"
+          },
+          {
+            "name": "x",
+            "type": "float*",
+            "description": "输出参数（四元数x分量）"
+          },
+          {
+            "name": "y",
+            "type": "float*",
+            "description": "输出参数（四元数y分量）"
+          },
+          {
+            "name": "z",
+            "type": "float*",
+            "description": "输出参数（四元数z分量）"
+          }
+        ]
+      },
+      {
+        "name": "bno055_set_accel_range",
+        "description": "设置加速度计量程",
+        "return_type": "bno055_status_t",
+        "parameters": [
+          {
+            "name": "range",
+            "type": "bno055_accel_range_t",
+            "description": "加速度计量程（±2G/±4G/±8G/±16G）"
+          }
+        ]
+      },
+      {
+        "name": "bno055_set_gyro_range",
+        "description": "设置陀螺仪量程",
+        "return_type": "bno055_status_t",
+        "parameters": [
+          {
+            "name": "range",
+            "type": "bno055_gyro_range_t",
+            "description": "陀螺仪量程（±125°/s/±250°/s/±500°/s/±1000°/s/±2000°/s）"
+          }
+        ]
+      },
+      {
+        "name": "bno055_set_mag_range",
+        "description": "设置磁力计量程",
+        "return_type": "bno055_status_t",
+        "parameters": [
+          {
+            "name": "range",
+            "type": "bno055_mag_range_t",
+            "description": "磁力计量程（±130μT/±260μT/±520μT/±1090μT）"
+          }
+        ]
+      },
+      {
+        "name": "bno055_set_odr",
+        "description": "设置输出数据率",
+        "return_type": "bno055_status_t",
+        "parameters": [
+          {
+            "name": "odr",
+            "type": "bno055_odr_t",
+            "description": "输出数据率（10Hz/20Hz/40Hz/80Hz/160Hz/320Hz/640Hz）"
+          }
+        ]
+      },
+      {
+        "name": "bno055_calibrate",
+        "description": "启动传感器校准（需用户按特定方向移动传感器）",
+        "return_type": "bno055_status_t",
+        "parameters": []
+      },
+      {
+        "name": "bno055_get_calibration_status",
+        "description": "获取校准状态（0-3表示各传感器校准进度）",
+        "return_type": "uint8_t",
+        "parameters": []
+      },
+      {
+        "name": "bno055_soft_reset",
+        "description": "软件复位传感器（恢复默认配置）",
+        "return_type": "bno055_status_t",
+        "parameters": []
+      },
+      {
+        "name": "bno055_power_down",
+        "description": "进入低功耗模式（停止所有测量）",
+        "return_type": "bno055_status_t",
+        "parameters": []
+      }
+    ],
+    "data_types": {
+      "bno055_comm_mode_t": [
+        "BNO055_I2C_MODE",
+        "BNO055_SPI_MODE"
+      ],
+      "bno055_operation_mode_t": [
+        "BNO055_MODE_ACCONLY",
+        "BNO055_MODE_MAGONLY",
+        "BNO055_MODE_GYRONLY",
+        "BNO055_MODE_ACCMAG",
+        "BNO055_MODE_ACCGYRO",
+        "BNO055_MODE_MAGGYRO",
+        "BNO055_MODE_AMG",
+        "BNO055_MODE_IMUPLUS",
+        "BNO055_MODE_COMPASS",
+        "BNO055_MODE_M4G",
+        "BNO055_MODE_NDOF_FMC_OFF",
+        "BNO055_MODE_NDOF"
+      ],
+      "bno055_accel_range_t": [
+        "BNO055_ACCEL_RANGE_2G",
+        "BNO055_ACCEL_RANGE_4G",
+        "BNO055_ACCEL_RANGE_8G",
+        "BNO055_ACCEL_RANGE_16G"
+      ],
+      "bno055_gyro_range_t": [
+        "BNO055_GYRO_RANGE_125DPS",
+        "BNO055_GYRO_RANGE_250DPS",
+        "BNO055_GYRO_RANGE_500DPS",
+        "BNO055_GYRO_RANGE_1000DPS",
+        "BNO055_GYRO_RANGE_2000DPS"
+      ],
+      "bno055_mag_range_t": [
+        "BNO055_MAG_RANGE_130UT",
+        "BNO055_MAG_RANGE_260UT",
+        "BNO055_MAG_RANGE_520UT",
+        "BNO055_MAG_RANGE_1090UT"
+      ],
+      "bno055_odr_t": [
+        "BNO055_ODR_10HZ",
+        "BNO055_ODR_20HZ",
+        "BNO055_ODR_40HZ",
+        "BNO055_ODR_80HZ",
+        "BNO055_ODR_160HZ",
+        "BNO055_ODR_320HZ",
+        "BNO055_ODR_640HZ"
+      ],
+      "bno055_raw_data_t": {
+        "accel_x_raw": "int16_t",
+        "accel_y_raw": "int16_t",
+        "accel_z_raw": "int16_t",
+        "gyro_x_raw": "int16_t",
+        "gyro_y_raw": "int16_t",
+        "gyro_z_raw": "int16_t",
+        "mag_x_raw": "int16_t",
+        "mag_y_raw": "int16_t",
+        "mag_z_raw": "int16_t"
+      },
+      "bno055_calib_param_t": {
+        "accel_offset": "int16_t[3]",
+        "gyro_offset": "int16_t[3]",
+        "mag_offset": "int16_t[3]",
+        "accel_radius": "uint16_t",
+        "mag_radius": "uint16_t"
+      }
+    },
+    "hardware_config": {
+      "comm_mode": "BNO055_I2C_MODE",
+      "i2c_port": 0,
+      "sda_pin": 21,
+      "scl_pin": 22,
+      "i2c_addr": "0x28",
+      "spi_cs_pin": 18,
+      "interrupt_pin": 24,
+      "default_operation_mode": "BNO055_MODE_NDOF",
+      "default_accel_range": "BNO055_ACCEL_RANGE_2G",
+      "default_gyro_range": "BNO055_GYRO_RANGE_250DPS",
+      "default_mag_range": "BNO055_MAG_RANGE_130UT",
+      "default_odr": "BNO055_ODR_100HZ"
+    },
+    "error_handling": {
+      "retry_count": 3,
+      "timeout_threshold": 200
+    }
+  }
+}

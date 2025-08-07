@@ -1,0 +1,189 @@
+{
+  "MPU6020_Interface": {
+    "status_enum": {
+      "MPU6020_StatusTypeDef": [
+        "MPU6020_OK",
+        "MPU6020_ERROR_INIT",
+        "MPU6020_ERROR_I2C",
+        "MPU6020_ERROR_DLPF",
+        "MPU6020_ERROR_DATA_OVERRUN"
+      ]
+    },
+    "functions": [
+      {
+        "name": "mpu6020_init",
+        "description": "初始化MPU6020（配置I2C/SPI通信+读取WHO_AM_I+基础参数）",
+        "return_type": "MPU6020_StatusTypeDef",
+        "parameters": [
+          {
+            "name": "comm_mode",
+            "type": "mpu6020_comm_mode_t",
+            "description": "通信模式（I2C_MODE/SPI_MODE）"
+          },
+          {
+            "name": "i2c_port",
+            "type": "uint8_t",
+            "description": "I2C端口号（I2C_NUM_0/I2C_NUM_1，仅I2C_MODE有效）"
+          },
+          {
+            "name": "sda_pin",
+            "type": "uint8_t",
+            "description": "I2C数据引脚编号（如GPIO21，仅I2C_MODE有效）"
+          },
+          {
+            "name": "scl_pin",
+            "type": "uint8_t",
+            "description": "I2C时钟引脚编号（如GPIO22，仅I2C_MODE有效）"
+          },
+          {
+            "name": "spi_cs_pin",
+            "type": "uint8_t",
+            "description": "SPI片选引脚编号（如GPIO18，仅SPI_MODE有效）"
+          }
+        ]
+      },
+      {
+        "name": "mpu6020_set_scale",
+        "description": "设置加速度计/陀螺仪量程（影响原始数据分辨率）",
+        "return_type": "MPU6020_StatusTypeDef",
+        "parameters": [
+          {
+            "name": "accel_scale",
+            "type": "mpu6020_accel_scale_t",
+            "description": "加速度计量程（±2g/±4g/±8g/±16g）"
+          },
+          {
+            "name": "gyro_scale",
+            "type": "mpu6020_gyro_scale_t",
+            "description": "陀螺仪量程（±250°/±500°/±1000°/±2000°）"
+          }
+        ]
+      },
+      {
+        "name": "mpu6020_set_filter",
+        "description": "配置数字低通滤波器（DLPF）与采样率",
+        "return_type": "MPU6020_StatusTypeDef",
+        "parameters": [
+          {
+            "name": "dlpf_bandwidth",
+            "type": "mpu6020_dlpf_t",
+            "description": "DLPF带宽（250Hz/184Hz/92Hz/41Hz/20Hz/10Hz/5Hz）"
+          },
+          {
+            "name": "sample_rate_div",
+            "type": "uint8_t",
+            "description": "采样率分频系数（实际采样率=1kHz/(分频系数+1)）"
+          }
+        ]
+      },
+      {
+        "name": "mpu6020_read_raw_data",
+        "description": "读取加速度计和陀螺仪的原始ADC值",
+        "return_type": "MPU6020_StatusTypeDef",
+        "parameters": [
+          {
+            "name": "raw_data",
+            "type": "mpu6020_raw_data_t*",
+            "description": "输出参数（存储原始加速度/角速度ADC值）"
+          }
+        ]
+      },
+      {
+        "name": "mpu6020_calculate_angle",
+        "description": "根据原始数据计算姿态角（需校准零偏）",
+        "return_type": "MPU6020_StatusTypeDef",
+        "parameters": [
+          {
+            "name": "calib_data",
+            "type": "mpu6020_calib_t*",
+            "description": "输入参数（校准系数结构体指针）"
+          },
+          {
+            "name": "angle",
+            "type": "mpu6020_angle_t*",
+            "description": "输出参数（存储横滚角/俯仰角/偏航角）"
+          }
+        ]
+      },
+      {
+        "name": "mpu6020_soft_reset",
+        "description": "通过写入PWR_MGMT_1寄存器触发传感器软复位",
+        "return_type": "MPU6020_StatusTypeDef",
+        "parameters": []
+      },
+      {
+        "name": "mpu6020_wake_up",
+        "description": "从睡眠模式切换到测量模式",
+        "return_type": "MPU6020_StatusTypeDef",
+        "parameters": []
+      },
+      {
+        "name": "mpu6020_sleep",
+        "description": "进入睡眠模式（降低功耗）",
+        "return_type": "MPU6020_StatusTypeDef",
+        "parameters": []
+      }
+    ],
+    "data_types": {
+      "mpu6020_comm_mode_t": [
+        "MPU6020_I2C_MODE",
+        "MPU6020_SPI_MODE"
+      ],
+      "mpu6020_accel_scale_t": [
+        "MPU6020_ACCEL_SCALE_2G",
+        "MPU6020_ACCEL_SCALE_4G",
+        "MPU6020_ACCEL_SCALE_8G",
+        "MPU6020_ACCEL_SCALE_16G"
+      ],
+      "mpu6020_gyro_scale_t": [
+        "MPU6020_GYRO_SCALE_250DPS",
+        "MPU6020_GYRO_SCALE_500DPS",
+        "MPU6020_GYRO_SCALE_1000DPS",
+        "MPU6020_GYRO_SCALE_2000DPS"
+      ],
+      "mpu6020_dlpf_t": [
+        "MPU6020_DLPF_250HZ",
+        "MPU6020_DLPF_184HZ",
+        "MPU6020_DLPF_92HZ",
+        "MPU6020_DLPF_41HZ",
+        "MPU6020_DLPF_20HZ",
+        "MPU6020_DLPF_10HZ",
+        "MPU6020_DLPF_5HZ"
+      ],
+      "mpu6020_raw_data_t": {
+        "accel_x_adc": "int16_t",
+        "accel_y_adc": "int16_t",
+        "accel_z_adc": "int16_t",
+        "gyro_x_adc": "int16_t",
+        "gyro_y_adc": "int16_t",
+        "gyro_z_adc": "int16_t"
+      },
+      "mpu6020_calib_t": {
+        "accel_offset_x": "int16_t",
+        "accel_offset_y": "int16_t",
+        "accel_offset_z": "int16_t",
+        "gyro_offset_x": "int16_t",
+        "gyro_offset_y": "int16_t",
+        "gyro_offset_z": "int16_t"
+      },
+      "mpu6020_angle_t": {
+        "roll": "float",
+        "pitch": "float",
+        "yaw": "float"
+      }
+    },
+    "hardware_config": {
+      "comm_mode": "MPU6020_I2C_MODE",
+      "i2c_port": 0,
+      "sda_pin": 21,
+      "scl_pin": 22,
+      "i2c_addr": "0x68",
+      "spi_cs_pin": 18,
+      "sample_rate_div": 0
+    },
+    "error_handling": {
+      "retry_count": 3,
+      "timeout_threshold": 100
+    }
+  }
+}

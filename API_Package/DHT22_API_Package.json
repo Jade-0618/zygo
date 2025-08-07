@@ -1,0 +1,81 @@
+{
+  "DHT22_Interface": {
+    "status_enum": {
+      "dht22_status_t": [
+        "DHT22_OK",
+        "DHT22_ERROR_TIMEOUT",
+        "DHT22_ERROR_CRC",
+        "DHT22_ERROR_INVALID_DATA",
+        "DHT22_ERROR_NOT_INITIALIZED",
+        "DHT22_ERROR_SENSOR_BUSY"
+      ]
+    },
+    "functions": [
+      {
+        "name": "dht22_init",
+        "return_type": "dht22_status_t",
+        "parameters": [
+          {"name": "data_pin", "type": "uint8_t", "description": "单总线数据引脚编号（如GPIO4）"},
+          {"name": "power_pin", "type": "int8_t", "description": "电源控制引脚（-1=禁用，如GPIO12用于外部供电）"},
+          {"name": "measurement_interval_ms", "type": "uint32_t", "description": "测量间隔时间（单位：ms，默认2000ms，最小2000ms）"}
+        ]
+      },
+      {
+        "name": "dht22_read",
+        "return_type": "dht22_status_t",
+        "parameters": [
+          {"name": "temperature", "type": "float*", "description": "输出参数（温度值，单位：°C）"},
+          {"name": "humidity", "type": "float*", "description": "输出参数（湿度值，单位：%RH）"}
+        ]
+      },
+      {
+        "name": "dht22_read_raw",
+        "return_type": "dht22_status_t",
+        "parameters": [
+          {"name": "raw_data", "type": "uint8_t[5]", "description": "输出参数（原始5字节数据）"}
+        ]
+      },
+      {
+        "name": "dht22_set_measurement_interval",
+        "return_type": "dht22_status_t",
+        "parameters": [
+          {"name": "interval_ms", "type": "uint32_t", "description": "新的测量间隔时间（单位：ms，需≥2000ms）"}
+        ]
+      },
+      {
+        "name": "dht22_reset",
+        "return_type": "dht22_status_t",
+        "parameters": []
+      },
+      {
+        "name": "dht22_calibrate",
+        "return_type": "dht22_status_t",
+        "parameters": [
+          {"name": "temp_offset", "type": "float", "description": "温度偏移校准值（单位：°C，默认0）"},
+          {"name": "humidity_offset", "type": "float", "description": "湿度偏移校准值（单位：%RH，默认0）"}
+        ]
+      }
+    ],
+    "data_types": {
+      "dht22_raw_data_t": {
+        "raw_bytes": "uint8_t[5]"
+      },
+      "dht22_calib_param_t": {
+        "temp_offset": "float",
+        "humidity_offset": "float"
+      }
+    },
+    "hardware_config": {
+      "default_data_pin": 4,
+      "power_pin": -1,
+      "measurement_interval_ms": 2000,
+      "timeout_threshold_ms": 500,
+      "max_retry_count": 3
+    },
+    "error_handling": {
+      "retry_count": 3,
+      "timeout_threshold": 500
+    },
+    "note": "DHT22为单总线数字温湿度传感器，支持3-5V供电，测量精度为±0.5°C（温度）和±2%RH（湿度），测量范围：-40°C~80°C（温度），0%~100%RH（湿度）。通信时需严格遵循单总线时序：主机拉低数据线≥18ms后释放，传感器响应40-50μs低电平后发送40位数据（5字节）。原始数据格式为[湿度整数][湿度小数][温度整数][温度小数][校验和]（校验和为前4字节和的低8位）。校准通过temp_offset和humidity_offset参数修正硬件误差，需在稳定环境下两点校准。"
+  }
+}

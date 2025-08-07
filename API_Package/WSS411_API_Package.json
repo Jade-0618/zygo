@@ -1,0 +1,126 @@
+{
+  "WSS411_Interface": {
+    "status_enum": {
+      "wss411_status_t": [
+        "WSS411_OK",
+        "WSS411_ERROR_I2C",
+        "WSS411_ERROR_TIMEOUT",
+        "WSS411_ERROR_INVALID_DATA",
+        "WSS411_ERROR_NOT_INITIALIZED",
+        "WSS411_ERROR_CALIBRATION_FAIL",
+        "WSS411_ERROR_TEMP_OUT_OF_RANGE",
+        "WSS411_ERROR_HUM_OUT_OF_RANGE"
+      ]
+    },
+    "functions": [
+      {
+        "name": "wss411_init",
+        "return_type": "wss411_status_t",
+        "parameters": [
+          {"name": "i2c_port", "type": "i2c_port_t", "description": "I2C端口号（如I2C_NUM_0）"},
+          {"name": "i2c_addr", "type": "uint8_t", "description": "I2C设备地址（0x40/0x41，默认0x40）"},
+          {"name": "i2c_clk_hz", "type": "uint32_t", "description": "I2C时钟频率（单位：Hz，默认100000）"},
+          {"name": "power_pin", "type": "int8_t", "description": "电源控制引脚（-1=禁用，默认-1）"},
+          {"name": "reset_pin", "type": "int8_t", "description": "复位引脚（-1=禁用，默认-1）"}
+        ]
+      },
+      {
+        "name": "wss411_read_temperature",
+        "return_type": "wss411_status_t",
+        "parameters": [
+          {"name": "temperature_c", "type": "float*", "description": "输出参数（温度值，单位：°C）"}
+        ]
+      },
+      {
+        "name": "wss411_read_humidity",
+        "return_type": "wss411_status_t",
+        "parameters": [
+          {"name": "humidity_rh", "type": "float*", "description": "输出参数（湿度值，单位：%RH）"}
+        ]
+      },
+      {
+        "name": "wss411_read_raw",
+        "return_type": "wss411_status_t",
+        "parameters": [
+          {"name": "raw_temp", "type": "int16_t*", "description": "输出参数（温度原始值，单位：LSB）"},
+          {"name": "raw_hum", "type": "int16_t*", "description": "输出参数（湿度原始值，单位：LSB）"}
+        ]
+      },
+      {
+        "name": "wss411_set_resolution",
+        "return_type": "wss411_status_t",
+        "parameters": [
+          {"name": "resolution_bits", "type": "uint8_t", "description": "测量分辨率（0x09=9位, 0x0A=10位, 0x0B=11位, 0x0C=12位）"}
+        ]
+      },
+      {
+        "name": "wss411_set_operating_mode",
+        "return_type": "wss411_status_t",
+        "parameters": [
+          {"name": "mode", "type": "uint8_t", "description": "工作模式（0=连续测量，1=单次测量后休眠）"}
+        ]
+      },
+      {
+        "name": "wss411_calibrate",
+        "return_type": "wss411_status_t",
+        "parameters": [
+          {"name": "ref_temp_c", "type": "float", "description": "参考温度值（单位：°C）"},
+          {"name": "ref_hum_rh", "type": "float", "description": "参考湿度值（单位：%RH）"},
+          {"name": "measured_temp_c", "type": "float", "description": "传感器测量温度值（单位：°C）"},
+          {"name": "measured_hum_rh", "type": "float", "description": "传感器测量湿度值（单位：%RH）"}
+        ]
+      },
+      {
+        "name": "wss411_soft_reset",
+        "return_type": "wss411_status_t",
+        "parameters": []
+      },
+      {
+        "name": "wss411_power_on",
+        "return_type": "wss411_status_t",
+        "parameters": []
+      },
+      {
+        "name": "wss411_power_off",
+        "return_type": "wss411_status_t",
+        "parameters": []
+      }
+    ],
+    "data_types": {
+      "wss411_raw_data_t": {
+        "raw_temp": "int16_t",  
+        "raw_hum": "int16_t"    
+      },
+      "wss411_calib_param_t": {
+        "temp_offset": "float",      
+        "hum_offset": "float",        
+        "temp_slope": "float",        
+        "hum_slope": "float"          
+      }
+    },
+    "hardware_config": {
+      "default_i2c_port": "I2C_NUM_0",  
+      "default_i2c_addr": "0x40",       
+      "default_i2c_clk_hz": 100000,   
+      "default_resolution": "0x0C",     
+      "default_operating_mode": 0,    
+      "power_pin": -1,                
+      "reset_pin": -1,                
+      "temp_range_degc": {           
+        "min": -40,
+        "max": 125
+      },
+      "hum_range_rh": {               
+        "min": 0,
+        "max": 100
+      },
+      "base_resolution_degc": 0.01,   
+      "base_resolution_rh": 0.01      
+    },
+    "error_handling": {
+      "retry_count": 3,               
+      "timeout_threshold_ms": 200     
+    },
+    "note": "WSS-411为I2C接口数字温湿度传感器，支持温度（-40°C~125°C）和湿度（0%~100%RH）测量，分辨率最高12位（0.01°C/%RH）。通过I2C协议（0x40/0x41）输出原始数据，需通过校准参数（偏移/斜率）修正误差。支持连续/单次测量模式，可通过电源/复位引脚控制供电和复位。校准需使用已知参考值调整传感器输出特性，实际值计算公式：temperature_c = (raw_temp * temp_slope) + temp_offset；humidity_rh = (raw_hum * hum_slope) + hum_offset。"
+  }
+}

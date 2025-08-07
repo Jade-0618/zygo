@@ -1,0 +1,332 @@
+{
+  "MPU9250_Interface": {
+    "status_enum": {
+      "mpu9250_status_t": [
+        "MPU9250_OK",
+        "MPU9250_ERROR_I2C",
+        "MPU9250_ERROR_SPI",
+        "MPU9250_ERROR_REG_READ",
+        "MPU9250_ERROR_REG_WRITE",
+        "MPU9250_ERROR_TIMEOUT",
+        "MPU9250_ERROR_INVALID_PARAM",
+        "MPU9250_ERROR_NOT_INITIALIZED",
+        "MPU9250_ERROR_MAG_NOT_DETECTED"
+      ]
+    },
+    "functions": [
+      {
+        "name": "mpu9250_init",
+        "return_type": "mpu9250_status_t",
+        "parameters": [
+          {
+            "name": "comm_mode",
+            "type": "mpu9250_comm_mode_t",
+            "description": "通信模式（I2C_MODE/SPI_MODE）"
+          },
+          {
+            "name": "i2c_port",
+            "type": "uint8_t",
+            "description": "I2C端口号（仅I2C_MODE有效，如I2C_NUM_0）"
+          },
+          {
+            "name": "sda_pin",
+            "type": "uint8_t",
+            "description": "I2C数据引脚编号（仅I2C_MODE有效，如GPIO21）"
+          },
+          {
+            "name": "scl_pin",
+            "type": "uint8_t",
+            "description": "I2C时钟引脚编号（仅I2C_MODE有效，如GPIO22）"
+          },
+          {
+            "name": "i2c_addr",
+            "type": "uint8_t",
+            "description": "I2C设备地址（0x68=AD0引脚接地，0x69=AD0引脚接VDD，仅I2C_MODE有效）"
+          },
+          {
+            "name": "spi_cs_pin",
+            "type": "uint8_t",
+            "description": "SPI片选引脚编号（仅SPI_MODE有效，如GPIO18）"
+          },
+          {
+            "name": "interrupt_pin",
+            "type": "int8_t",
+            "description": "中断引脚编号（-1=禁用，如GPIO24）"
+          },
+          {
+            "name": "mag_i2c_addr",
+            "type": "uint8_t",
+            "description": "磁力计I2C地址（0x0C=AK8963默认地址）"
+          }
+        ]
+      },
+      {
+        "name": "mpu9250_set_accel_range",
+        "return_type": "mpu9250_status_t",
+        "parameters": [
+          {
+            "name": "range",
+            "type": "mpu9250_accel_range_t",
+            "description": "加速度量程（±2G/±4G/±8G/±16G）"
+          }
+        ]
+      },
+      {
+        "name": "mpu9250_set_gyro_range",
+        "return_type": "mpu9250_status_t",
+        "parameters": [
+          {
+            "name": "range",
+            "type": "mpu9250_gyro_range_t",
+            "description": "陀螺仪量程（±250°/s/±500°/s/±1000°/s/±2000°/s）"
+          }
+        ]
+      },
+      {
+        "name": "mpu9250_set_mag_range",
+        "return_type": "mpu9250_status_t",
+        "parameters": [
+          {
+            "name": "range",
+            "type": "mpu9250_mag_range_t",
+            "description": "磁力计量程（±4800μT/±2500μT/±1200μT/±600μT）"
+          }
+        ]
+      },
+      {
+        "name": "mpu9250_set_sample_rate",
+        "return_type": "mpu9250_status_t",
+        "parameters": [
+          {
+            "name": "rate",
+            "type": "uint16_t",
+            "description": "采样率（1-1000Hz，实际受LPF限制）"
+          }
+        ]
+      },
+      {
+        "name": "mpu9250_set_lpf",
+        "return_type": "mpu9250_status_t",
+        "parameters": [
+          {
+            "name": "lpf",
+            "type": "mpu9250_lpf_t",
+            "description": "低通滤波器（LPF_188HZ/LPF_98HZ/LPF_42HZ/LPF_20HZ/LPF_10HZ/LPF_5HZ）"
+          }
+        ]
+      },
+      {
+        "name": "mpu9250_set_power_mode",
+        "return_type": "mpu9250_status_t",
+        "parameters": [
+          {
+            "name": "mode",
+            "type": "mpu9250_power_mode_t",
+            "description": "功率模式（STANDBY/MEASUREMENT）"
+          }
+        ]
+      },
+      {
+        "name": "mpu9250_read_raw_data",
+        "return_type": "mpu9250_status_t",
+        "parameters": [
+          {
+            "name": "accel_x_raw",
+            "type": "int16_t*",
+            "description": "输出参数（X轴加速度原始值，单位：LSB）"
+          },
+          {
+            "name": "accel_y_raw",
+            "type": "int16_t*",
+            "description": "输出参数（Y轴加速度原始值，单位：LSB）"
+          },
+          {
+            "name": "accel_z_raw",
+            "type": "int16_t*",
+            "description": "输出参数（Z轴加速度原始值，单位：LSB）"
+          },
+          {
+            "name": "gyro_x_raw",
+            "type": "int16_t*",
+            "description": "输出参数（X轴陀螺仪原始值，单位：LSB）"
+          },
+          {
+            "name": "gyro_y_raw",
+            "type": "int16_t*",
+            "description": "输出参数（Y轴陀螺仪原始值，单位：LSB）"
+          },
+          {
+            "name": "gyro_z_raw",
+            "type": "int16_t*",
+            "description": "输出参数（Z轴陀螺仪原始值，单位：LSB）"
+          },
+          {
+            "name": "temp_raw",
+            "type": "int16_t*",
+            "description": "输出参数（温度原始值，单位：LSB，需转换为℃：(temp_raw - 521)/333.87）"
+          }
+        ]
+      },
+      {
+        "name": "mpu9250_read_acceleration",
+        "return_type": "mpu9250_status_t",
+        "parameters": [
+          {
+            "name": "x",
+            "type": "float*",
+            "description": "输出参数（X轴加速度，单位：m/s²）"
+          },
+          {
+            "name": "y",
+            "type": "float*",
+            "description": "输出参数（Y轴加速度，单位：m/s²）"
+          },
+          {
+            "name": "z",
+            "type": "float*",
+            "description": "输出参数（Z轴加速度，单位：m/s²）"
+          }
+        ]
+      },
+      {
+        "name": "mpu9250_read_gyroscope",
+        "return_type": "mpu9250_status_t",
+        "parameters": [
+          {
+            "name": "x",
+            "type": "float*",
+            "description": "输出参数（X轴角速度，单位：°/s）"
+          },
+          {
+            "name": "y",
+            "type": "float*",
+            "description": "输出参数（Y轴角速度，单位：°/s）"
+          },
+          {
+            "name": "z",
+            "type": "float*",
+            "description": "输出参数（Z轴角速度，单位：°/s）"
+          }
+        ]
+      },
+      {
+        "name": "mpu9250_read_magnetometer",
+        "return_type": "mpu9250_status_t",
+        "parameters": [
+          {
+            "name": "x",
+            "type": "float*",
+            "description": "输出参数（X轴磁感应强度，单位：μT）"
+          },
+          {
+            "name": "y",
+            "type": "float*",
+            "description": "输出参数（Y轴磁感应强度，单位：μT）"
+          },
+          {
+            "name": "z",
+            "type": "float*",
+            "description": "输出参数（Z轴磁感应强度，单位：μT）"
+          }
+        ]
+      },
+      {
+        "name": "mpu9250_soft_reset",
+        "return_type": "mpu9250_status_t",
+        "parameters": []
+      },
+      {
+        "name": "mpu9250_get_interrupt_status",
+        "return_type": "uint8_t",
+        "parameters": [],
+        "description": "获取中断标志位（位0=数据就绪，位1=运动检测，位2=零运动，位3=外触发，位4=溢出）"
+      },
+      {
+        "name": "mpu9250_calibrate",
+        "return_type": "mpu9250_status_t",
+        "parameters": [
+          {
+            "name": "accel_offsets",
+            "type": "int16_t[3]",
+            "description": "加速度校准偏移量（X/Y/Z轴，LSB）"
+          },
+          {
+            "name": "gyro_offsets",
+            "type": "int16_t[3]",
+            "description": "陀螺仪校准偏移量（X/Y/Z轴，LSB）"
+          }
+        ]
+      }
+    ],
+    "data_types": {
+      "mpu9250_comm_mode_t": [
+        "MPU9250_I2C_MODE",
+        "MPU9250_SPI_MODE"
+      ],
+      "mpu9250_accel_range_t": [
+        "MPU9250_ACCEL_RANGE_2G",
+        "MPU9250_ACCEL_RANGE_4G",
+        "MPU9250_ACCEL_RANGE_8G",
+        "MPU9250_ACCEL_RANGE_16G"
+      ],
+      "mpu9250_gyro_range_t": [
+        "MPU9250_GYRO_RANGE_250DPS",
+        "MPU9250_GYRO_RANGE_500DPS",
+        "MPU9250_GYRO_RANGE_1000DPS",
+        "MPU9250_GYRO_RANGE_2000DPS"
+      ],
+      "mpu9250_mag_range_t": [
+        "MPU9250_MAG_RANGE_4800UT",
+        "MPU9250_MAG_RANGE_2500UT",
+        "MPU9250_MAG_RANGE_1200UT",
+        "MPU9250_MAG_RANGE_600UT"
+      ],
+      "mpu9250_lpf_t": [
+        "MPU9250_LPF_188HZ",
+        "MPU9250_LPF_98HZ",
+        "MPU9250_LPF_42HZ",
+        "MPU9250_LPF_20HZ",
+        "MPU9250_LPF_10HZ",
+        "MPU9250_LPF_5HZ"
+      ],
+      "mpu9250_power_mode_t": [
+        "MPU9250_POWER_STANDBY",
+        "MPU9250_POWER_MEASUREMENT"
+      ],
+      "mpu9250_raw_data_t": {
+        "accel_x_raw": "int16_t",
+        "accel_y_raw": "int16_t",
+        "accel_z_raw": "int16_t",
+        "gyro_x_raw": "int16_t",
+        "gyro_y_raw": "int16_t",
+        "gyro_z_raw": "int16_t",
+        "temp_raw": "int16_t"
+      },
+      "mpu9250_calib_param_t": {
+        "accel_offsets": "int16_t[3]",
+        "gyro_offsets": "int16_t[3]"
+      }
+    },
+    "hardware_config": {
+      "comm_mode": "MPU9250_I2C_MODE",
+      "i2c_port": 0,
+      "sda_pin": 21,
+      "scl_pin": 22,
+      "i2c_addr": "0x68",
+      "spi_cs_pin": 18,
+      "interrupt_pin": 24,
+      "mag_i2c_addr": "0x0C",
+      "default_accel_range": "MPU9250_ACCEL_RANGE_2G",
+      "default_gyro_range": "MPU9250_GYRO_RANGE_250DPS",
+      "default_mag_range": "MPU9250_MAG_RANGE_4800UT",
+      "default_sample_rate": 100,
+      "default_lpf": "MPU9250_LPF_188HZ",
+      "default_power_mode": "MPU9250_POWER_MEASUREMENT"
+    },
+    "error_handling": {
+      "retry_count": 3,
+      "timeout_threshold": 100
+    },
+    "note": "MPU9250集成3轴加速度计、3轴陀螺仪和3轴磁力计（AK8963），需先初始化主芯片再配置磁力计。加速度计和陀螺仪通过内部寄存器配置量程和滤波器，磁力计需通过I2C子地址访问。温度传感器集成于主芯片，输出需转换。校准函数需传入外部计算的偏移量以优化精度。"
+  }
+}

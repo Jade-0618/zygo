@@ -1,0 +1,26 @@
+{
+  "LED_Interface": {
+    "functions": [
+      {
+        "description": "用于设置指定引脚的工作模式，对于LED通常设置为输出模式",
+        "name": "pinMode()",
+        "return_type": "void"
+      },
+      {
+        "description": "向指定引脚写入高电平或低电平，可用于点亮或熄灭LED",
+        "name": "digitalWrite()",
+        "return_type": "void"
+      },
+      {
+        "description": "点亮LED的专用API函数",
+        "name": "ledOn()",
+        "return_type": "void"
+      },
+      {
+        "description": "熄灭LED的专用API函数",
+        "name": "ledOff()",
+        "return_type": "void"
+      }
+    ]
+  }
+}

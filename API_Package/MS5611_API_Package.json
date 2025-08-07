@@ -1,0 +1,160 @@
+{
+  "MS5611_Interface": {
+    "status_enum": {
+      "MS5611_StatusTypeDef": [
+        "MS5611_OK",
+        "MS5611_ERROR_I2C",
+        "MS5611_ERROR_SPI",
+        "MS5611_ERROR_REG_READ",
+        "MS5611_ERROR_REG_WRITE",
+        "MS5611_ERROR_TIMEOUT",
+        "MS5611_ERROR_CALIBRATION_DATA"
+      ]
+    },
+    "functions": [
+      {
+        "name": "ms5611_init",
+        "description": "初始化MS5611传感器（配置通信接口+读取设备ID+加载校准参数）",
+        "return_type": "MS5611_StatusTypeDef",
+        "parameters": [
+          {
+            "name": "comm_mode",
+            "type": "ms5611_comm_mode_t",
+            "description": "通信模式（I2C_MODE/SPI_MODE）"
+          },
+          {
+            "name": "i2c_port",
+            "type": "uint8_t",
+            "description": "I2C端口号（仅I2C_MODE有效，如I2C_NUM_0）"
+          },
+          {
+            "name": "sda_pin",
+            "type": "uint8_t",
+            "description": "I2C数据引脚编号（仅I2C_MODE有效，如GPIO21）"
+          },
+          {
+            "name": "scl_pin",
+            "type": "uint8_t",
+            "description": "I2C时钟引脚编号（仅I2C_MODE有效，如GPIO22）"
+          },
+          {
+            "name": "spi_cs_pin",
+            "type": "uint8_t",
+            "description": "SPI片选引脚编号（仅SPI_MODE有效，如GPIO18）"
+          },
+          {
+            "name": "i2c_addr",
+            "type": "uint8_t",
+            "description": "I2C设备地址（0x76=ADDR引脚接地，0x77=ADDR引脚接VDD，仅I2C_MODE有效）"
+          }
+        ]
+      },
+      {
+        "name": "ms5611_set_osr",
+        "description": "设置气压/温度过采样率（影响精度与转换时间）",
+        "return_type": "MS5611_StatusTypeDef",
+        "parameters": [
+          {
+            "name": "pressure_osr",
+            "type": "ms5611_osr_t",
+            "description": "气压过采样率（256x/512x/1024x/2048x/4096x/8192x）"
+          },
+          {
+            "name": "temperature_osr",
+            "type": "ms5611_osr_t",
+            "description": "温度过采样率（256x/512x/1024x/2048x/4096x/8192x）"
+          }
+        ]
+      },
+      {
+        "name": "ms5611_read_raw_pressure",
+        "description": "读取气压原始ADC值（24位，需等待转换完成）",
+        "return_type": "MS5611_StatusTypeDef",
+        "parameters": [
+          {
+            "name": "raw_pressure",
+            "type": "uint32_t*",
+            "description": "输出参数（气压原始值，单位：LSB）"
+          }
+        ]
+      },
+      {
+        "name": "ms5611_read_raw_temperature",
+        "description": "读取温度原始ADC值（24位，需等待转换完成）",
+        "return_type": "MS5611_StatusTypeDef",
+        "parameters": [
+          {
+            "name": "raw_temperature",
+            "type": "uint32_t*",
+            "description": "输出参数（温度原始值，单位：LSB）"
+          }
+        ]
+      },
+      {
+        "name": "ms5611_read_pressure",
+        "description": "读取校准后的气压值（单位：hPa，自动补偿温度）",
+        "return_type": "float",
+        "parameters": []
+      },
+      {
+        "name": "ms5611_read_temperature",
+        "description": "读取校准后的温度值（单位：°C，已补偿）",
+        "return_type": "float",
+        "parameters": []
+      },
+      {
+        "name": "ms5611_soft_reset",
+        "description": "通过发送RESET命令（0x1E）触发传感器软复位（恢复默认配置）",
+        "return_type": "MS5611_StatusTypeDef",
+        "parameters": []
+      },
+      {
+        "name": "ms5611_enter_standby",
+        "description": "进入低功耗待机模式（停止所有测量，电流<1μA）",
+        "return_type": "MS5611_StatusTypeDef",
+        "parameters": []
+      },
+      {
+        "name": "ms5611_wake_up",
+        "description": "从待机模式唤醒至测量模式（需重新触发转换）",
+        "return_type": "MS5611_StatusTypeDef",
+        "parameters": []
+      }
+    ],
+    "data_types": {
+      "ms5611_comm_mode_t": [
+        "MS5611_I2C_MODE",  
+        "MS5611_SPI_MODE"   
+      ],
+      "ms5611_osr_t": [
+        "MS5611_OSR_256X",   
+        "MS5611_OSR_512X",  
+        "MS5611_OSR_1024X",  
+        "MS5611_OSR_2048X",  
+        "MS5611_OSR_4096X",  
+        "MS5611_OSR_8192X"   
+      ],
+      "ms5611_raw_data_t": {
+        "pressure_adc": "uint32_t",  
+        "temperature_adc": "uint32_t" 
+      }
+    },
+    "hardware_config": {
+      "comm_mode": "MS5611_I2C_MODE",  
+      "i2c_port": 0,                   
+      "sda_pin": 21,                   
+      "scl_pin": 22,                  
+      "i2c_addr": "0x76",                
+      "spi_cs_pin": 18,                
+      "i2c_frequency": 100000,         
+      "spi_frequency": 1000000,        
+      "power_pin": -1,                 
+      "interrupt_pin": -1             
+    },
+    "error_handling": {
+      "retry_count": 3,                
+      "timeout_threshold": 50          
+    },
+    "calibration_note": "传感器内部集成64字节EEPROM存储校准系数（C1-C6），初始化时自动读取并用于温度补偿和气压计算。校准公式基于多项式拟合，具体参数可参考MS5611数据手册。"
+  }
+}

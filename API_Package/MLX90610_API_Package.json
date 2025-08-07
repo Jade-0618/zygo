@@ -1,0 +1,108 @@
+{
+  "MLX90614_Interface": {
+    "status_enum": {
+      "mlx90614_status_t": [
+        "MLX90614_OK",
+        "MLX90614_ERROR_I2C",
+        "MLX90614_ERROR_TIMEOUT",
+        "MLX90614_ERROR_INVALID_DATA",
+        "MLX90614_ERROR_NOT_INITIALIZED",
+        "MLX90614_ERROR_CALIBRATION_FAIL",
+        "MLX90614_ERROR_EEPROM_LOCKED"
+      ]
+    },
+    "functions": [
+      {
+        "name": "mlx90614_init",
+        "return_type": "mlx90614_status_t",
+        "parameters": [
+          {"name": "i2c_port", "type": "uint8_t", "description": "I2C端口号（如I2C_NUM_0）"},
+          {"name": "i2c_addr", "type": "uint8_t", "description": "I2C设备地址（0x5A/0x5B，默认0x5A）"},
+          {"name": "i2c_clk_hz", "type": "uint32_t", "description": "I2C时钟频率（单位：Hz，默认100000）"},
+          {"name": "power_pin", "type": "int8_t", "description": "电源控制引脚（-1=禁用，默认-1）"}
+        ]
+      },
+      {
+        "name": "mlx90614_read_object_temp",
+        "return_type": "mlx90614_status_t",
+        "parameters": [
+          {"name": "temp_c", "type": "float*", "description": "输出参数（物体温度值，单位：°C）"}
+        ]
+      },
+      {
+        "name": "mlx90614_read_ambient_temp",
+        "return_type": "mlx90614_status_t",
+        "parameters": [
+          {"name": "temp_c", "type": "float*", "description": "输出参数（环境温度值，单位：°C）"}
+        ]
+      },
+      {
+        "name": "mlx90614_read_raw",
+        "return_type": "mlx90614_status_t",
+        "parameters": [
+          {"name": "raw_obj", "type": "int16_t*", "description": "输出参数（物体温度原始值）"},
+          {"name": "raw_amb", "type": "int16_t*", "description": "输出参数（环境温度原始值）"}
+        ]
+      },
+      {
+        "name": "mlx90614_set_emissivity",
+        "return_type": "mlx90614_status_t",
+        "parameters": [
+          {"name": "emissivity", "type": "float", "description": "发射率（范围0.1-1.0，默认1.0）"}
+        ]
+      },
+      {
+        "name": "mlx90614_calibrate",
+        "return_type": "mlx90614_status_t",
+        "parameters": [
+          {"name": "ref_temp_c", "type": "float", "description": "参考温度值（单位：°C）"},
+          {"name": "measured_temp_c", "type": "float", "description": "传感器测量值（单位：°C）"}
+        ]
+      },
+      {
+        "name": "mlx90614_set_address",
+        "return_type": "mlx90614_status_t",
+        "parameters": [
+          {"name": "new_addr", "type": "uint8_t", "description": "新I2C地址（0x5A-0x5B）"}
+        ]
+      },
+      {
+        "name": "mlx90614_sleep",
+        "return_type": "mlx90614_status_t",
+        "parameters": []
+      },
+      {
+        "name": "mlx90614_wake_up",
+        "return_type": "mlx90614_status_t",
+        "parameters": []
+      }
+    ],
+    "data_types": {
+      "mlx90614_raw_data_t": {
+        "raw_obj": "int16_t",  
+        "raw_amb": "int16_t"   
+      },
+      "mlx90614_calib_param_t": {
+        "emissivity": "float",       
+        "offset_obj": "float",       
+        "offset_amb": "float"        
+      }
+    },
+    "hardware_config": {
+      "default_i2c_port": "I2C_NUM_0",  
+      "default_i2c_addr": "0x5A",       
+      "default_i2c_clk_hz": 100000,   
+      "power_pin": -1,                
+      "measurement_range_degc": {     
+        "min": -70,
+        "max": 382.2
+      },
+      "default_emissivity": 1.0       
+    },
+    "error_handling": {
+      "retry_count": 3,               
+      "timeout_threshold_ms": 100     
+    },
+    "note": "MLX90614为MEMS红外温度传感器，支持I2C接口（0x5A/0x5B），测量范围-70°C~382.2°C，分辨率0.02°C。通过测量物体红外辐射能量计算温度，发射率可调（0.1-1.0）。校准需两点法：使用已知参考温度和传感器测量值修正偏移误差。通信时需遵循I2C协议，读取0x07（物体温度）和0x06（环境温度）寄存器获取原始数据，公式：temperature_c = raw_value * 0.02 - 273.15（物体温度）；环境温度同理。"
+  }
+}

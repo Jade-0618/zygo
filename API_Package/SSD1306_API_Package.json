@@ -1,0 +1,135 @@
+{
+  "SSD1306_Interface": {
+    "status_enum": {
+      "ssd1306_status_t": [
+        "SSD1306_OK",
+        "SSD1306_ERROR_I2C",
+        "SSD1306_ERROR_TIMEOUT",
+        "SSD1306_ERROR_INVALID_DATA",
+        "SSD1306_ERROR_NOT_INITIALIZED",
+        "SSD1306_ERROR_INVALID_POSITION",
+        "SSD1306_ERROR_INVALID_COLOR"
+      ]
+    },
+    "functions": [
+      {
+        "name": "ssd1306_init",
+        "return_type": "ssd1306_status_t",
+        "parameters": [
+          {"name": "i2c_port", "type": "i2c_port_t", "description": "I2C端口号（如I2C_NUM_0）"},
+          {"name": "i2c_addr", "type": "uint8_t", "description": "I2C设备地址（0x3C/0x3D，默认0x3C）"},
+          {"name": "i2c_clk_hz", "type": "uint32_t", "description": "I2C时钟频率（单位：Hz，默认100000）"},
+          {"name": "backlight_pin", "type": "int8_t", "description": "背光控制引脚（-1=禁用，默认-1）"},
+          {"name": "backlight_on", "type": "bool", "description": "初始背光状态（true=开启，false=关闭）"}
+        ]
+      },
+      {
+        "name": "ssd1306_clear",
+        "return_type": "ssd1306_status_t",
+        "parameters": []
+      },
+      {
+        "name": "ssd1306_set_cursor",
+        "return_type": "ssd1306_status_t",
+        "parameters": [
+          {"name": "row", "type": "uint8_t", "description": "显示行（0-3，对应4行显示）"},
+          {"name": "col", "type": "uint8_t", "description": "列位置（0-15，每行16字符）"}
+        ]
+      },
+      {
+        "name": "ssd1306_display_char",
+        "return_type": "ssd1306_status_t",
+        "parameters": [
+          {"name": "row", "type": "uint8_t", "description": "显示行（0-3）"},
+          {"name": "col", "type": "uint8_t", "description": "列位置（0-15）"},
+          {"name": "char_code", "type": "uint8_t", "description": "字符编码（ASCII码或自定义字符）"}
+        ]
+      },
+      {
+        "name": "ssd1306_display_string",
+        "return_type": "ssd1306_status_t",
+        "parameters": [
+          {"name": "row", "type": "uint8_t", "description": "显示行（0-3）"},
+          {"name": "col", "type": "uint8_t", "description": "起始列（0-15）"},
+          {"name": "str", "type": "const char*", "description": "待显示字符串（最大16字符/行）"}
+        ]
+      },
+      {
+        "name": "ssd1306_draw_point",
+        "return_type": "ssd1306_status_t",
+        "parameters": [
+          {"name": "x", "type": "uint8_t", "description": "像素X坐标（0-127）"},
+          {"name": "y", "type": "uint8_t", "description": "像素Y坐标（0-63）"},
+          {"name": "color", "type": "uint8_t", "description": "像素颜色（0=背景色，1=前景色）"}
+        ]
+      },
+      {
+        "name": "ssd1306_draw_line",
+        "return_type": "ssd1306_status_t",
+        "parameters": [
+          {"name": "x1", "type": "uint8_t", "description": "起点X坐标（0-127）"},
+          {"name": "y1", "type": "uint8_t", "description": "起点Y坐标（0-63）"},
+          {"name": "x2", "type": "uint8_t", "description": "终点X坐标（0-127）"},
+          {"name": "y2", "type": "uint8_t", "description": "终点Y坐标（0-63）"},
+          {"name": "color", "type": "uint8_t", "description": "线条颜色（0=背景色，1=前景色）"}
+        ]
+      },
+      {
+        "name": "ssd1306_fill_rect",
+        "return_type": "ssd1306_status_t",
+        "parameters": [
+          {"name": "x", "type": "uint8_t", "description": "矩形左上角X坐标（0-127）"},
+          {"name": "y", "type": "uint8_t", "description": "矩形左上角Y坐标（0-63）"},
+          {"name": "width", "type": "uint8_t", "description": "矩形宽度（1-128）"},
+          {"name": "height", "type": "uint8_t", "description": "矩形高度（1-64）"},
+          {"name": "color", "type": "uint8_t", "description": "填充颜色（0=背景色，1=前景色）"}
+        ]
+      },
+      {
+        "name": "ssd1306_define_custom_char",
+        "return_type": "ssd1306_status_t",
+        "parameters": [
+          {"name": "location", "type": "uint8_t", "description": "自定义字符位置（0-7）"},
+          {"name": "char_data", "type": "const uint8_t[8]", "description": "8x8点阵数据（8字节，每字节对应一行）"}
+        ]
+      },
+      {
+        "name": "ssd1306_backlight_control",
+        "return_type": "ssd1306_status_t",
+        "parameters": [
+          {"name": "on", "type": "bool", "description": "背光控制（true=开启，false=关闭）"}
+        ]
+      }
+    ],
+    "data_types": {
+      "ssd1306_display_buffer_t": {
+        "buffer": "uint8_t[128][64]"  
+      },
+      "ssd1306_cursor_param_t": {
+        "row": "uint8_t",            
+        "col": "uint8_t"             
+      },
+      "ssd1306_color_t": {
+        "fg_color": "uint8_t",       
+        "bg_color": "uint8_t"        
+      }
+    },
+    "hardware_config": {
+      "default_i2c_port": "I2C_NUM_0",      
+      "default_i2c_addr": "0x3C",            
+      "default_i2c_clk_hz": 100000,        
+      "default_backlight_pin": -1,         
+      "default_backlight_on": true,        
+      "max_rows": 4,                       
+      "max_cols": 16,                      
+      "pixel_resolution": "128x64",       
+      "char_matrix": "8x8",                
+      "active_level": "HIGH"               
+    },
+    "error_handling": {
+      "retry_count": 3,                    
+      "timeout_threshold_ms": 200          
+    },
+    "note": "SSD1306为I2C接口128x64像素OLED驱动芯片，支持字符（8x8点阵）和图形显示。通过I2C协议与ESP32-S3通信，可实现清屏、光标定位、字符/字符串显示、基本图形绘制（点、线、矩形填充）及背光控制。初始化需配置I2C参数及背光状态，显示内容通过发送指令和编码数据实现。适用于嵌入式系统信息展示、参数监控等场景。"
+  }
+}
