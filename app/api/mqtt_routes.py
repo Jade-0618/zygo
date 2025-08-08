@@ -8,6 +8,7 @@ from app.services import mqtt_service
 from app.models import Device, MqttLog
 from .device_routes import token_required
 from app import db
+import paho.mqtt.client as mqtt
 
 mqtt_blueprint = Blueprint('mqtt_api', __name__)
 
@@ -93,8 +94,8 @@ def stream_device_mqtt_logs(device_id):
 
         try:
             # 发送初始的历史日志
-            recent_logs = MqttLog.query.filter_by(device_id=device_id)\      
-                                     .order_by(MqttLog.timestamp.desc())\    
+            recent_logs = MqttLog.query.filter_by(device_id=device_id)\
+                                     .order_by(MqttLog.timestamp.desc())\
                                      .limit(50)\
                                      .all()
 
@@ -105,9 +106,9 @@ def stream_device_mqtt_logs(device_id):
             # 保持连接，等待新消息
             while True:
                 # 检查是否有新的日志（防止回调函数失效的备用机制）
-                new_logs = MqttLog.query.filter_by(device_id=device_id)\     
-                                       .filter(MqttLog.id > last_log_id)\    
-                                       .order_by(MqttLog.timestamp.asc())\   
+                new_logs = MqttLog.query.filter_by(device_id=device_id)\
+                                       .filter(MqttLog.id > last_log_id)\
+                                       .order_by(MqttLog.timestamp.asc())\
                                        .all()
 
                 for log in new_logs:
@@ -180,7 +181,7 @@ def get_device_mqtt_config(device_id):
         'mqtt_broker_port': device.mqtt_broker_port,
         'mqtt_username': device.mqtt_username,
         'mqtt_client_id': device.mqtt_client_id,
-        'mqtt_subscribe_topics': device.subscribe_topics,
+        'mqtt_subscribe_topics': device.mqtt_subscribe_topics,
         'mqtt_monitoring_enabled': device.mqtt_monitoring_enabled
     }), 200
 
@@ -210,7 +211,7 @@ def update_device_mqtt_config(device_id):
     if 'mqtt_client_id' in data:
         device.mqtt_client_id = data['mqtt_client_id']
     if 'mqtt_subscribe_topics' in data:
-        device.subscribe_topics = data['mqtt_subscribe_topics']
+        device.mqtt_subscribe_topics = data['mqtt_subscribe_topics']
     if 'mqtt_monitoring_enabled' in data:
         old_enabled = device.mqtt_monitoring_enabled
         device.mqtt_monitoring_enabled = data['mqtt_monitoring_enabled']     
@@ -239,22 +240,110 @@ def get_device_mqtt_status(device_id):
         user_id=g.current_user.id
     ).first_or_404()
 
-    # 检查设备是否在监控服务中
-    is_connected = device_id in mqtt_service.mqtt_monitor.clients
-    client = mqtt_service.mqtt_monitor.clients.get(device_id)
+    # 检查设备MQTT连接状态
+    is_connected = mqtt_service.mqtt_monitor.is_device_connected(device_id)
 
     status = {
         'monitoring_enabled': device.mqtt_monitoring_enabled,
-        'is_connected': is_connected and client.is_connected() if client else False,
+        'is_connected': is_connected,
         'broker_host': device.mqtt_broker_host,
         'broker_port': device.mqtt_broker_port,
-        'subscribed_topics': device.subscribe_topics
+        'subscribed_topics': device.mqtt_subscribe_topics
     }
 
     return jsonify(status), 200
 
 
-@mqtt_blueprint.route('/devices/<device_id>/mqtt/topics', methods=['GET'])   
+@mqtt_blueprint.route('/devices/<device_id>/mqtt/test', methods=['POST'])
+@token_required
+def test_device_mqtt_connection(device_id):
+    """测试设备的MQTT连接"""
+    device = Device.query.filter_by(
+        internal_device_id=device_id,
+        user_id=g.current_user.id
+    ).first_or_404()
+
+    data = request.get_json()
+
+    try:
+        # 创建临时客户端进行测试，使用更兼容的配置
+        test_client = mqtt.Client(
+            client_id=f"test_{device_id}_{int(time.time())}",
+            protocol=mqtt.MQTTv311,
+            clean_session=True
+        )
+
+        # 设置认证信息
+        if data.get('mqtt_username'):
+            password = data.get('mqtt_password', '')
+            test_client.username_pw_set(data['mqtt_username'], password)
+
+        # 设置连接结果标志
+        connection_result = {'success': False, 'error': None, 'completed': False}
+
+        def on_connect(client, userdata, flags, rc):
+            connection_result['completed'] = True
+            if rc == 0:
+                connection_result['success'] = True
+            else:
+                error_messages = {
+                    1: "协议版本不正确",
+                    2: "客户端标识符无效",
+                    3: "服务器不可用",
+                    4: "用户名或密码错误",
+                    5: "未授权"
+                }
+                connection_result['error'] = error_messages.get(rc, f"连接失败，错误码: {rc}")
+
+        def on_disconnect(client, userdata, rc):
+            if not connection_result['completed']:
+                connection_result['completed'] = True
+                connection_result['error'] = f"连接断开，错误码: {rc}"
+
+        test_client.on_connect = on_connect
+        test_client.on_disconnect = on_disconnect
+
+        # 尝试连接
+        test_client.connect(data['mqtt_broker_host'], int(data.get('mqtt_broker_port', 1883)), 10)
+        test_client.loop_start()
+
+        # 等待连接结果
+        for _ in range(100):  # 最多等待10秒
+            if connection_result['completed']:
+                break
+            time.sleep(0.1)
+
+        # 清理测试连接
+        try:
+            test_client.disconnect()
+            test_client.loop_stop()
+        except:
+            pass
+
+        if connection_result['success']:
+            return jsonify({'success': True, 'message': 'MQTT连接测试成功'}), 200
+        else:
+            error_msg = connection_result['error'] or '连接超时，请检查服务器是否运行'
+            return jsonify({'success': False, 'error': error_msg}), 400
+
+    except Exception as e:
+        error_msg = str(e)
+        host = data["mqtt_broker_host"]
+
+        # 检查是否包含协议前缀
+        if any(prefix in host.lower() for prefix in ['mqtt://', 'mqtts://', 'tcp://', 'ssl://']):
+            error_msg = f'主机名不应包含协议前缀！\n当前输入: "{host}"\n请只输入主机名，如: "localhost" 或 "192.168.1.100"'
+        elif 'getaddrinfo failed' in error_msg:
+            error_msg = f'无法解析主机名 "{host}"，请检查：\n1. 主机名是否正确（如: localhost, 127.0.0.1）\n2. 不要包含 mqtt:// 等协议前缀\n3. DNS设置是否正确'
+        elif 'Connection refused' in error_msg:
+            error_msg = f'连接被拒绝，请检查：\n1. MQTT服务器是否运行\n2. 端口 {data.get("mqtt_broker_port", 1883)} 是否正确\n3. 防火墙设置'
+        elif 'timeout' in error_msg.lower():
+            error_msg = f'连接超时，请检查：\n1. 主机名 "{host}" 是否可达\n2. 网络连接是否正常\n3. 防火墙是否阻止连接'
+
+        return jsonify({'success': False, 'error': error_msg}), 400
+
+
+@mqtt_blueprint.route('/devices/<device_id>/mqtt/topics', methods=['GET'])
 @token_required
 def get_device_mqtt_topics(device_id):
     """获取设备的MQTT主题统计"""

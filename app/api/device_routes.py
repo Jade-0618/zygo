@@ -10,6 +10,13 @@ from app import db  # 导入db实例
 device_blueprint = Blueprint('device_api', __name__)
 
 
+# --- Token验证函数 ---
+def verify_token(token):
+    """验证token并返回用户对象"""
+    if not token:
+        return None
+    return auth_service.verify_auth_token(token)
+
 # --- Token验证装饰器 ---
 def token_required(f):
     @wraps(f)
@@ -21,7 +28,7 @@ def token_required(f):
         if not token:
             return jsonify({'error': '未提供认证Token'}), 401
 
-        user = auth_service.verify_auth_token(token)
+        user = verify_token(token)
         if not user:
             return jsonify({'error': 'Token无效或已过期'}), 401
 
