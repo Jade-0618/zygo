@@ -8,7 +8,17 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" onload="console.log('JSZip loaded from primary CDN')" onerror="loadJSZipBackup()"></script>
+    <script>
+        function loadJSZipBackup() {
+            console.warn('Primary JSZip CDN failed, loading backup...');
+            const script = document.createElement('script');
+            script.src = 'https://unpkg.com/jszip@3.10.1/dist/jszip.min.js';
+            script.onload = () => console.log('JSZip loaded from backup CDN');
+            script.onerror = () => console.error('All JSZip CDNs failed');
+            document.head.appendChild(script);
+        }
+    </script>
     <style>
         /* [保留所有您之前的 :root, *, html/body, button, input 等基础样式] */
         :root {
@@ -882,7 +892,7 @@
         }
 
         /* 3. 优化鼠标悬停/聚焦效果 */
-        #prompt-input-wrapper > button:hover svg {<button id="expand-input-btn" title="展开/收起">
+        #prompt-input-wrapper > button:hover svg {
             color: var(--text-primary);
             transform: scale(1.1); /* 轻微放大，增加动感 */
         }
@@ -975,8 +985,11 @@
                         <div id="file-tree-header">
                             <h3>文件浏览器</h3>
                             <div style="display: flex; gap: 8px;">
+                                <button id="flash-firmware-btn" class="secondary" title="烧录固件到设备" style="display: inline-flex;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                                </button>
                                 <button id="load-cloud-project-btn" class="secondary" title="加载云端项目">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 17.5C4.01 17.5 2 15.49 2 13s2.01-4.5 4.5-4.5c.34 0 .68.04 1 .11C8.58 6.07 10.69 4.5 13.5 4.5c3.59 0 6.5 2.91 6.5 6.5 0 .79-.14 1.55-.4 2.26.78.4 1.4 1.18 1.4 2.24 0 1.38-1.12 2.5-2.5 2.5h-12Z"/></svg>
                                 </button>
                                 <button id="open-local-folder-btn" class="secondary" title="打开本地文件夹">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"></path></svg>
@@ -1303,8 +1316,17 @@
         const isSuccess = expectedStatus ? response.status === expectedStatus : response.ok;
         if (!isSuccess) {
             let errorMsg = `请求失败，状态码: ${response.status}`;
-            try { errorMsg = JSON.parse(responseText).error || errorMsg; } catch (e) {}
-            throw new Error(errorMsg);
+            let errorData = null;
+            try {
+                errorData = JSON.parse(responseText);
+                errorMsg = errorData.error || errorMsg;
+            } catch (e) {}
+
+            // 创建带有响应数据的错误对象
+            const error = new Error(errorMsg);
+            error.response = response;
+            error.responseData = errorData;
+            throw error;
         }
         try { return JSON.parse(responseText); } catch (e) { return {}; }
     }
@@ -1870,6 +1892,8 @@
             syncedLocalProjectId = null; // 重置已同步的项目ID
             localFileHandles.clear();
 
+
+
             const treeContainer = document.getElementById('file-tree-container');
             treeContainer.innerHTML = '<p style="padding: 10px; color: var(--text-secondary);">正在读取文件夹...</p>';
 
@@ -1885,6 +1909,12 @@
             document.querySelector('#status-workflow span').textContent = dirHandle.name;
             document.querySelector('#status-device span').textContent = '本地项目';
 
+            // 强制显示烧录按钮
+            const flashBtn = document.getElementById('flash-firmware-btn');
+            if (flashBtn) {
+                flashBtn.style.display = 'inline-flex';
+            }
+
         } catch (error) {
             if (error.name !== 'AbortError') {
                 console.error('打开文件夹失败:', error);
@@ -1893,15 +1923,130 @@
         }
     }
 
+    function showFlashResult(success, message, keyErrors = '', fullOutput = '', suggestions = []) {
+        // 创建结果显示模态框
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        `;
+
+        const content = document.createElement('div');
+        content.style.cssText = `
+            background: #1a1a28;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            max-width: 80%;
+            max-height: 80%;
+            overflow: auto;
+            color: #ffffff;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        `;
+
+        const title = success ? '🎉 烧录成功' : '❌ 烧录失败';
+        const titleColor = success ? '#4CAF50' : '#f44336';
+
+        content.innerHTML = `
+            <h3 style="color: ${titleColor}; margin-top: 0;">${title}</h3>
+            <p><strong>消息:</strong> ${message}</p>
+            ${suggestions.length > 0 ? `
+                <div style="margin-top: 15px; padding: 15px; background: #2d4a22; border: 1px solid #4caf50; border-radius: 6px;">
+                    <strong style="color: #81c784;">💡 解决建议:</strong>
+                    <ul style="margin: 8px 0; padding-left: 20px; color: #e8f5e8;">
+                        ${suggestions.map(s => `<li style="margin: 4px 0;">${s}</li>`).join('')}
+                    </ul>
+                </div>
+            ` : ''}
+            ${keyErrors ? `
+                <div style="margin-top: 15px;">
+                    <strong style="color: #ff8a80;">🔍 关键错误信息:</strong>
+                    <pre style="
+                        background: #2d1b1b;
+                        border: 1px solid #f44336;
+                        padding: 15px;
+                        border-radius: 6px;
+                        overflow: auto;
+                        max-height: 250px;
+                        font-size: 14px;
+                        line-height: 1.4;
+                        white-space: pre-wrap;
+                        margin-top: 8px;
+                        color: #ffcdd2;
+                        font-family: 'Consolas', 'Monaco', monospace;
+                    ">${keyErrors}</pre>
+                </div>
+            ` : ''}
+            ${fullOutput ? `
+                <details style="margin-top: 15px;">
+                    <summary style="cursor: pointer; font-weight: bold; color: #90caf9;">完整输出日志 (调试用)</summary>
+                    <pre style="
+                        background: #0d1117;
+                        border: 1px solid #30363d;
+                        padding: 15px;
+                        border-radius: 6px;
+                        overflow: auto;
+                        max-height: 400px;
+                        font-size: 13px;
+                        line-height: 1.3;
+                        white-space: pre-wrap;
+                        margin-top: 10px;
+                        color: #c9d1d9;
+                        font-family: 'Consolas', 'Monaco', monospace;
+                    ">${fullOutput}</pre>
+                </details>
+            ` : ''}
+            <div style="text-align: right; margin-top: 20px;">
+                <button onclick="this.closest('.flash-result-modal').remove()"
+                        style="
+                            background: var(--accent-color);
+                            color: white;
+                            border: none;
+                            padding: 8px 16px;
+                            border-radius: 4px;
+                            cursor: pointer;
+                        ">关闭</button>
+            </div>
+        `;
+
+        modal.className = 'flash-result-modal';
+        modal.appendChild(content);
+        document.body.appendChild(modal);
+
+        // 点击背景关闭
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
+    }
+
     async function syncLocalProject() {
-        if (!isLocalProject || localFileHandles.size === 0) {
-            alert("没有可同步的本地项目。");
-            return;
+        // 检查是否有文件树内容，如果有但 localFileHandles 为空，说明需要重新获取文件句柄
+        const treeContainer = document.getElementById('file-tree-container');
+        const hasFileTree = treeContainer.children.length > 0;
+
+        if (!isLocalProject && !hasFileTree) {
+            throw new Error("没有可同步的本地项目。");
+        }
+
+        if (localFileHandles.size === 0 && hasFileTree) {
+            throw new Error("本地文件句柄丢失，请重新打开本地文件夹。");
         }
 
         const syncButton = document.getElementById('sync-local-project-btn');
-        syncButton.disabled = true;
-        syncButton.textContent = '同步中...';
+        if (syncButton) {
+            syncButton.disabled = true;
+            syncButton.textContent = '同步中...';
+        }
 
         try {
             const zip = new JSZip();
@@ -1933,16 +2078,20 @@
             const result = await response.json();
             syncedLocalProjectId = result.localProjectId; // 保存返回的ID
 
-            syncButton.textContent = '同步成功!';
-            syncButton.onclick = null; // 禁用按钮的再次点击
+            if (syncButton) {
+                syncButton.textContent = '同步成功!';
+                syncButton.onclick = null; // 禁用按钮的再次点击
+            }
 
         } catch (error) {
-            alert(`项目同步失败: ${error.message}`);
-            syncButton.textContent = '同步失败';
-            setTimeout(() => {
-                syncButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>`;
-                syncButton.disabled = false;
-            }, 3000);
+            if (syncButton) {
+                syncButton.textContent = '同步失败';
+                setTimeout(() => {
+                    syncButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>`;
+                    syncButton.disabled = false;
+                }, 3000);
+            }
+            throw error; // 重新抛出错误，让调用者处理
         }
     }
 
@@ -2016,6 +2165,8 @@
         }
         currentWorkflowId = workflowId;
         isLocalProject = false;
+
+
 
         const treeContainer = document.getElementById('file-tree-container');
         treeContainer.innerHTML = '<p style="padding: 10px; color: var(--text-secondary);">加载文件中...</p>';
@@ -2309,6 +2460,91 @@
         }
     }
 
+    async function flashFirmware() {
+        // 检查是否有本地文件或云端项目
+        const hasLocalFiles = document.getElementById('file-tree-container').children.length > 0;
+        const hasCloudProject = !!currentWorkflowId;
+
+        if (!hasCloudProject && !hasLocalFiles) {
+            alert('请先打开一个项目');
+            return;
+        }
+
+        const flashBtn = document.getElementById('flash-firmware-btn');
+        const originalText = flashBtn.innerHTML;
+
+        flashBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> 烧录中...';
+        flashBtn.disabled = true;
+
+        try {
+            let response;
+            if (hasLocalFiles && !hasCloudProject) {
+                // 对于本地项目，尝试直接烧录
+                const projectName = document.querySelector('#status-workflow span').textContent;
+
+                if (syncedLocalProjectId) {
+                    // 如果已同步，使用同步的项目ID
+                    response = await fetchApi('/projects/flash', 'POST', {
+                        localProjectId: syncedLocalProjectId
+                    });
+                } else {
+                    // 尝试直接烧录（假设项目在temp_workspaces中）
+                    const projectPath = `temp_workspaces/${projectName}`;
+                    response = await fetchApi('/projects/flash', 'POST', {
+                        localProjectPath: projectPath
+                    });
+                }
+            } else {
+                // 对于云端项目，使用工作流ID
+                response = await fetchApi('/projects/flash', 'POST', {
+                    workflowId: currentWorkflowId
+                });
+            }
+
+            const result = await response.json();
+            showFlashResult(true, result.message, '', result.output);
+        } catch (error) {
+            console.error('Flash error details:', error);
+
+            // 尝试解析错误响应
+            let errorMessage = error.message;
+            let keyErrors = '';
+            let fullOutput = '';
+            let suggestions = [];
+
+            if (error.responseData) {
+                // 使用已解析的响应数据
+                console.log('Raw error data from server:', error.responseData);
+                console.log('Return code from server:', error.responseData.returncode);
+                errorMessage = error.responseData.error || error.message;
+                keyErrors = error.responseData.key_errors || '';
+                fullOutput = error.responseData.output || '';
+                suggestions = error.responseData.suggestions || [];
+                console.log('Processed error data:', {errorMessage, keyErrors, fullOutput, suggestions});
+                console.log('Key errors content:', keyErrors);
+            } else if (error.response) {
+                // 备用方案：尝试解析响应
+                try {
+                    const errorData = await error.response.json();
+                    console.log('Raw error data from server:', errorData);
+                    errorMessage = errorData.error || error.message;
+                    keyErrors = errorData.key_errors || '';
+                    fullOutput = errorData.output || '';
+                    suggestions = errorData.suggestions || [];
+                    console.log('Processed error data:', {errorMessage, keyErrors, fullOutput, suggestions});
+                } catch (e) {
+                    console.error('Failed to parse error response:', e);
+                    errorMessage = `HTTP ${error.response.status}: ${error.response.statusText}`;
+                }
+            }
+
+            showFlashResult(false, errorMessage, keyErrors, fullOutput, suggestions);
+        } finally {
+            flashBtn.innerHTML = originalText;
+            flashBtn.disabled = false;
+        }
+    }
+
 
     // ===================================================================
     // Workflow Polling & Rendering (unchanged)
@@ -2497,9 +2733,35 @@ function renderWorkflowUpdate(state) {
             },
             'view-file-explorer': () => {
                 const treeContainer = document.getElementById('file-tree-container');
-                if (!currentWorkflowId && !isLocalProject) {
-                     treeContainer.innerHTML = '<p style="padding: 10px; color: var(--text-secondary);">没有活动的构建任务。请先开始一个新项目或打开/加载一个项目。</p>';
+                const flashBtn = document.getElementById('flash-firmware-btn');
+
+                // 检查文件树容器中是否有内容，如果有且不是错误信息，说明有本地项目
+                const hasLocalFiles = treeContainer.children.length > 0 &&
+                                     !treeContainer.textContent.includes('没有活动的构建任务') &&
+                                     !treeContainer.textContent.includes('加载文件中') &&
+                                     !treeContainer.textContent.includes('文件夹为空');
+
+                // 修复：如果检测到有本地文件但状态不正确，恢复状态
+                if (hasLocalFiles && !isLocalProject && !currentWorkflowId) {
+                    console.log('Detected local project from file tree, restoring state...');
+                    isLocalProject = true;
                 }
+
+                // 检查是否有活动项目（云端项目或本地项目）
+                const hasActiveProject = currentWorkflowId || isLocalProject;
+
+
+
+                if (!hasActiveProject) {
+                     if (!hasLocalFiles) {
+                         treeContainer.innerHTML = '<p style="padding: 10px; color: var(--text-secondary);">没有活动的构建任务。请先开始一个新项目或打开/加载一个项目。</p>';
+                     }
+                     flashBtn.style.display = 'none';
+                } else {
+                    // 有活动项目时显示烧录按钮
+                    flashBtn.style.display = 'inline-flex';
+                }
+
                 if (!currentEditingPath) {
                     renderProblemsPanel([]);
                 }
@@ -2515,6 +2777,8 @@ function renderWorkflowUpdate(state) {
             button.addEventListener('click', () => {
                 const targetViewId = buttonToViewMap[button.id];
                 if (!targetViewId) return;
+
+
 
                 buttons.forEach(btn => btn.classList.remove('active'));
                 button.classList.add('active');
@@ -2721,6 +2985,7 @@ function renderWorkflowUpdate(state) {
         document.getElementById('device-form').addEventListener('submit', handleDeviceFormSubmit);
         document.getElementById('save-file-btn').addEventListener('click', saveFileContent);
         document.getElementById('open-local-folder-btn').addEventListener('click', openLocalFolder);
+        document.getElementById('flash-firmware-btn').addEventListener('click', flashFirmware);
 
         // --- 【核心修改】项目加载和模板删除逻辑 ---
         document.getElementById('load-cloud-project-btn').addEventListener('click', async () => {
@@ -2815,6 +3080,13 @@ function renderWorkflowUpdate(state) {
                 projectList.innerHTML = `<li>加载失败: ${error.message}</li>`;
             }
         });
+
+        // 检查 JSZip 是否加载
+        if (typeof JSZip === 'undefined') {
+            console.warn('JSZip not loaded yet, will retry when needed');
+        } else {
+            console.log('JSZip loaded successfully');
+        }
 
         // Check for stored token on load
         const storedToken = localStorage.getItem('accessToken');
