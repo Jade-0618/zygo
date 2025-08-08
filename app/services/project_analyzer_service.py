@@ -2,15 +2,25 @@
 # -*- coding: utf-8 -*-
 
 import json
+import os
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage
 from langchain_core.output_parsers import JsonOutputParser
+from pydantic import SecretStr
 
 from app.services import device_service
 from app.models import User
 
-API_KEY = "a985545a-1c6b-4bf4-8956-8c93ffc2181f"
-BASE_URL = "https://ark.cn-beijing.volces.com/api/v3"
+# 从环境变量获取API配置
+API_KEY_STR = os.environ.get('LANGCHAIN_API_KEY')
+BASE_URL = os.environ.get('LANGCHAIN_BASE_URL', "https://ark.cn-beijing.volces.com/api/v3")
+
+# 检查API_KEY是否设置
+if not API_KEY_STR:
+    raise ValueError("LANGCHAIN_API_KEY environment variable is not set. Please set it before running the application.")
+
+# 转换为SecretStr类型
+API_KEY = SecretStr(API_KEY_STR)
 
 analyzer_model = ChatOpenAI(model="ep-20250223112748-lthgv", temperature=0.1, api_key=API_KEY, base_url=BASE_URL)
 

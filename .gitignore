@@ -6,6 +6,15 @@ __pycache__/
 # IDE and editor files
 .vscode
 
+# Environment variables (contains sensitive information)
+.env
+*.env
+!.env.example
+
+# Database files
+*.sqlite
+*.db
+
 # Project specific files
 zygo.zip
 api_test_script.py

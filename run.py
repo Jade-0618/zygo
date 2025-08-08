@@ -1,7 +1,11 @@
 # run.py
 
 import os
+from dotenv import load_dotenv
 from app import create_app, db
+
+# 加载环境变量
+load_dotenv()
 # 【核心修正】在这里导入 Project 和新增的 WorkflowState 模型
 from app.models import User, Device, Project, WorkflowState
 from flask import render_template
