@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.47.0/min/vs/loader.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" onload="console.log('JSZip loaded from primary CDN')" onerror="loadJSZipBackup()"></script>
     <script>
         function loadJSZipBackup() {
@@ -366,10 +366,10 @@
         .nested { display: none; }
         .folder.open > .nested { display: block; }
         #view-device-manager { padding: 20px; overflow-y: auto; }
-        .device-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+        .device-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 20px; }
         .device-card {
             background-color: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 8px;
-            padding: 15px; display: flex; flex-direction: column; gap: 10px; transition: all 0.2s ease;
+            padding: 20px; display: flex; flex-direction: column; gap: 15px; transition: all 0.2s ease;
         }
         .device-card:hover { border-color: var(--accent-primary); box-shadow: 0 0 15px -5px var(--accent-primary-glow); }
         .device-card-header { display: flex; justify-content: space-between; align-items: center; }
@@ -378,6 +378,296 @@
         .device-card-actions { display: flex; gap: 10px; margin-top: auto; }
         .device-card-actions button { flex-grow: 1; padding: 8px; font-size: 0.9em; }
         .device-card-actions .delete-btn { background-color: var(--accent-error); }
+
+        /* MQTT监控相关样式 */
+        .mqtt-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+        .mqtt-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .mqtt-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+        }
+        .mqtt-status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--text-secondary);
+        }
+        .mqtt-status-indicator.connected {
+            background-color: var(--accent-success);
+            box-shadow: 0 0 6px var(--accent-success);
+        }
+        .mqtt-status-indicator.disconnected {
+            background-color: var(--accent-error);
+            box-shadow: 0 0 6px var(--accent-error);
+        }
+        .mqtt-status-indicator.disabled {
+            background-color: var(--text-secondary);
+        }
+        .mqtt-controls {
+            display: flex;
+            gap: 8px;
+        }
+        .mqtt-controls button {
+            padding: 6px 12px;
+            font-size: 0.8em;
+            border-radius: 4px;
+        }
+        .mqtt-log-container {
+            background-color: var(--bg-base);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            height: 300px;
+            overflow-y: auto;
+            padding: 12px;
+            font-family: var(--font-mono);
+            font-size: 0.9em;
+            margin-top: 10px;
+            line-height: 1.4;
+        }
+        .mqtt-log-entry {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-bottom: 12px;
+            padding: 8px;
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            border-left: 3px solid var(--accent-primary);
+        }
+        .mqtt-log-entry.incoming {
+            border-left-color: var(--accent-success);
+        }
+        .mqtt-log-entry.outgoing {
+            border-left-color: var(--accent-primary);
+        }
+        .mqtt-log-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.85em;
+        }
+        .mqtt-log-time {
+            color: var(--text-secondary);
+            min-width: 80px;
+            font-weight: 500;
+        }
+        .mqtt-log-direction {
+            min-width: 24px;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        .mqtt-log-direction.incoming {
+            color: var(--accent-success);
+        }
+        .mqtt-log-direction.outgoing {
+            color: var(--accent-primary);
+        }
+        .mqtt-log-topic {
+            color: var(--accent-primary);
+            font-weight: 500;
+            background: var(--bg-base);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+        .mqtt-log-payload {
+            color: var(--text-primary);
+            margin-top: 4px;
+            padding: 8px;
+            background: var(--bg-base);
+            border-radius: 4px;
+            word-break: break-word;
+            white-space: pre-wrap;
+            font-size: 0.95em;
+            line-height: 1.3;
+        }
+        .mqtt-log-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 8px;
+        }
+        .mqtt-log-actions button {
+            padding: 4px 8px;
+            font-size: 0.7em;
+        }
+
+        /* MQTT配置界面样式 */
+        .mqtt-config-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+        .mqtt-config-section h3 {
+            margin: 0 0 15px 0;
+            font-size: 1.1em;
+            font-weight: 500;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .mqtt-config-section h3::before {
+            content: '';
+            width: 4px;
+            height: 16px;
+            background: var(--accent-primary);
+            border-radius: 2px;
+        }
+        .mqtt-form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .mqtt-form-row > div {
+            flex: 1;
+        }
+        .mqtt-form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .mqtt-form-group label {
+            font-weight: 500;
+            color: var(--text-primary);
+            font-size: 0.9em;
+        }
+        .mqtt-form-group .label-optional {
+            color: var(--text-secondary);
+            font-weight: normal;
+        }
+        .mqtt-input-with-icon {
+            position: relative;
+        }
+        .mqtt-input-with-icon input,
+        .mqtt-input-with-icon textarea {
+            padding-left: 35px;
+        }
+        .mqtt-input-icon {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+        .mqtt-topics-help {
+            font-size: 0.8em;
+            color: var(--text-secondary);
+            margin-top: 5px;
+            line-height: 1.4;
+        }
+        .mqtt-monitoring-toggle {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .mqtt-monitoring-toggle:hover {
+            background: var(--bg-hover);
+            border-color: var(--accent-primary);
+        }
+        .mqtt-monitoring-toggle input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            margin: 0;
+        }
+        .mqtt-monitoring-toggle label {
+            margin: 0;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        /* MQTT配置对话框特殊样式 */
+        #mqtt-config-dialog .dialog-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+        #mqtt-config-dialog .dialog-actions button {
+            flex: 1;
+            padding: 10px 15px;
+            font-weight: 500;
+        }
+        #mqtt-config-dialog .dialog-actions button.secondary {
+            flex: 0 0 auto;
+            min-width: 80px;
+        }
+        #mqtt-test-btn {
+            background: var(--accent-primary);
+            color: white;
+            border: none;
+        }
+        #mqtt-test-btn:hover {
+            background: var(--accent-primary-hover);
+        }
+
+        /* MQTT主题输入框样式 */
+        .mqtt-topics-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .mqtt-topic-input-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .mqtt-topic-input-row .mqtt-input-with-icon {
+            flex: 1;
+        }
+        .mqtt-topic-input-row .mqtt-input-with-icon input {
+            width: 100%;
+        }
+        .mqtt-topic-remove-btn {
+            background: var(--accent-error);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 10px;
+            cursor: pointer;
+            font-size: 0.9em;
+            min-width: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .mqtt-topic-remove-btn:hover {
+            background: var(--accent-error-hover);
+        }
+        .mqtt-topics-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .mqtt-topics-actions button {
+            padding: 6px 12px;
+            font-size: 0.85em;
+        }
+        #mqtt-test-btn:disabled {
+            background: var(--text-secondary);
+            cursor: not-allowed;
+        }
         dialog {
             background: var(--bg-glass); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
             border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-primary);
@@ -387,6 +677,7 @@
         }
         dialog#confirmation-dialog, dialog#device-dialog { max-width: 800px; }
         dialog#settings-dialog, dialog#project-loader-dialog { max-width: 500px; }
+        dialog#mqtt-config-dialog { max-width: 800px; }
         dialog::backdrop { background: rgba(0, 0, 0, 0.4); }
         .dialog-content {
             padding: 25px; display: flex; flex-direction: column; gap: 15px;
@@ -1142,11 +1433,138 @@
         </div>
     </dialog>
 
+    <dialog id="mqtt-config-dialog">
+        <div class="dialog-content">
+            <h2>🔗 MQTT配置</h2>
+            <form id="mqtt-config-form" style="display: flex; flex-direction: column; gap: 0;">
+                <input type="hidden" id="mqtt-device-id">
+
+                <!-- 连接配置 -->
+                <div class="mqtt-config-section">
+                    <h3>🌐 连接设置</h3>
+                    <div class="mqtt-form-row">
+                        <div class="mqtt-form-group">
+                            <label for="mqtt-broker-host">Broker地址</label>
+                            <div class="mqtt-input-with-icon">
+                                <span class="mqtt-input-icon">🖥️</span>
+                                <input type="text" id="mqtt-broker-host" placeholder="例如: localhost 或 192.168.1.100" required>
+                            </div>
+                            <div class="mqtt-topics-help">
+                                💡 常用地址：localhost、127.0.0.1、192.168.1.100<br>
+                                ⚠️ 只需要主机名或IP，不要加 mqtt:// 前缀
+                            </div>
+                        </div>
+                        <div class="mqtt-form-group" style="flex: 0 0 120px;">
+                            <label for="mqtt-broker-port">端口</label>
+                            <div class="mqtt-input-with-icon">
+                                <span class="mqtt-input-icon">🔌</span>
+                                <input type="number" id="mqtt-broker-port" value="1883" min="1" max="65535" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mqtt-form-row">
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button type="button" class="secondary" onclick="setMqttPreset('localhost')" style="font-size: 0.8em; padding: 4px 8px;">localhost</button>
+                            <button type="button" class="secondary" onclick="setMqttPreset('127.0.0.1')" style="font-size: 0.8em; padding: 4px 8px;">127.0.0.1</button>
+                            <button type="button" class="secondary" onclick="setMqttPreset('192.168.1.100')" style="font-size: 0.8em; padding: 4px 8px;">192.168.1.100</button>
+                            <button type="button" class="secondary" onclick="setMqttPreset('test.mosquitto.org')" style="font-size: 0.8em; padding: 4px 8px;">公共测试服务器</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 认证配置 -->
+                <div class="mqtt-config-section">
+                    <h3>🔐 认证信息</h3>
+                    <div class="mqtt-form-row">
+                        <div class="mqtt-form-group">
+                            <label for="mqtt-username">用户名 <span class="label-optional">(可选)</span></label>
+                            <div class="mqtt-input-with-icon">
+                                <span class="mqtt-input-icon">👤</span>
+                                <input type="text" id="mqtt-username" placeholder="MQTT用户名">
+                            </div>
+                        </div>
+                        <div class="mqtt-form-group">
+                            <label for="mqtt-password">密码 <span class="label-optional">(可选)</span></label>
+                            <div class="mqtt-input-with-icon">
+                                <span class="mqtt-input-icon">🔑</span>
+                                <input type="password" id="mqtt-password" placeholder="MQTT密码">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mqtt-form-group">
+                        <label for="mqtt-client-id">客户端ID <span class="label-optional">(可选)</span></label>
+                        <div class="mqtt-input-with-icon">
+                            <span class="mqtt-input-icon">🏷️</span>
+                            <input type="text" id="mqtt-client-id" placeholder="留空将自动生成">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 订阅配置 -->
+                <div class="mqtt-config-section">
+                    <h3>📡 订阅主题</h3>
+                    <div class="mqtt-topics-container" id="mqtt-topics-container">
+                        <!-- 动态生成的主题输入框将在这里 -->
+                    </div>
+                    <div class="mqtt-topics-actions">
+                        <button type="button" class="secondary" onclick="addMqttTopicInput()">➕ 添加主题</button>
+                        <button type="button" class="secondary" onclick="addCommonMqttTopics()">📋 添加常用主题</button>
+                    </div>
+                    <div class="mqtt-topics-help">
+                        💡 支持MQTT通配符：+ (单级) 和 # (多级)<br>
+                        例如：sensor/+/temperature 或 device/#
+                    </div>
+                </div>
+
+                <!-- 监控开关 -->
+                <div class="mqtt-monitoring-toggle">
+                    <input type="checkbox" id="mqtt-monitoring-enabled">
+                    <label for="mqtt-monitoring-enabled">🔍 启用MQTT监控</label>
+                </div>
+
+                <div id="mqtt-config-error" style="color: var(--accent-error); font-size: 0.9em; margin-top: 10px;"></div>
+            </form>
+        </div>
+        <div class="dialog-actions">
+            <button type="button" class="secondary" onclick="document.getElementById('mqtt-config-dialog').close()">❌ 取消</button>
+            <button type="button" onclick="testMqttConnection()" id="mqtt-test-btn">🔍 测试连接</button>
+            <button type="submit" form="mqtt-config-form" onclick="handleMqttConfigSubmit(event)">💾 保存配置</button>
+        </div>
+    </dialog>
+
 <script>
     document.addEventListener('DOMContentLoaded', () => {
+    // --- 全局错误处理 ---
+    window.addEventListener('error', function(event) {
+        if (event.error && event.error.message) {
+            const errorMsg = event.error.message;
+            if (errorMsg.includes('getModifierState') ||
+                errorMsg.includes('keyboardEvent') ||
+                errorMsg.includes('StandardKeyboardEvent')) {
+                console.warn('Caught Monaco Editor keyboard event error:', event.error);
+                event.preventDefault(); // 阻止错误冒泡到控制台
+                return true;
+            }
+        }
+    });
+
+    // 捕获未处理的Promise拒绝
+    window.addEventListener('unhandledrejection', function(event) {
+        if (event.reason && event.reason.message) {
+            const errorMsg = event.reason.message;
+            if (errorMsg.includes('getModifierState') ||
+                errorMsg.includes('keyboardEvent') ||
+                errorMsg.includes('StandardKeyboardEvent')) {
+                console.warn('Caught Monaco Editor promise rejection:', event.reason);
+                event.preventDefault();
+                return true;
+            }
+        }
+    });
+
     // --- State Management & Globals (unchanged) ---
     let currentWorkflowId = null;
-    let accessToken = null;
+    // accessToken 现在是全局变量
     let userDevices = [];
     let statusInterval = null;
     let currentEditingPath = null;
@@ -1763,7 +2181,34 @@
                             <button onclick="openEditDeviceDialog('${dev.internal_device_id}')">编辑</button>
                             <button class="delete-btn" onclick="deleteDevice('${dev.internal_device_id}')">删除</button>
                         </div>
+
+                        <!-- MQTT监控部分 -->
+                        <div class="mqtt-section">
+                            <div class="mqtt-header">
+                                <div class="mqtt-status">
+                                    <div class="mqtt-status-indicator disabled" id="mqtt-status-${dev.internal_device_id}"></div>
+                                    <span id="mqtt-status-text-${dev.internal_device_id}">未启用</span>
+                                </div>
+                                <div class="mqtt-controls">
+                                    <button onclick="openMqttConfigDialog('${dev.internal_device_id}')" class="secondary">配置MQTT</button>
+                                    <button onclick="toggleMqttMonitoring('${dev.internal_device_id}')" id="mqtt-toggle-${dev.internal_device_id}">启用监控</button>
+                                    <button onclick="debugMqttStatus('${dev.internal_device_id}')" class="secondary" style="font-size: 0.8em;">🔍 调试</button>
+                                </div>
+                            </div>
+                            <div class="mqtt-log-container" id="mqtt-log-container-${dev.internal_device_id}">
+                                <div style="text-align: center; color: var(--text-secondary); padding: 20px;">
+                                    暂无MQTT日志
+                                </div>
+                            </div>
+                            <div class="mqtt-log-actions">
+                                <span style="font-size: 0.8em; color: var(--text-secondary);">MQTT Explorer</span>
+                                <button onclick="clearMqttLogs('${dev.internal_device_id}')" class="secondary">清空日志</button>
+                            </div>
+                        </div>
                     </div>`;
+
+                // 初始化MQTT状态
+                setTimeout(() => initializeMqttStatus(dev.internal_device_id), 100);
             });
         } catch (error) {
             deviceGrid.innerHTML = `<p style="color: var(--accent-error);">加载设备失败: ${error.message}</p>`;
@@ -2886,32 +3331,49 @@ function renderWorkflowUpdate(state) {
         window.toggleProblemsPanel = toggleProblemsPanel;
         window.filterProblems      = filterProblems;
         // --- Monaco Editor 初始化 ---
-        require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' }});
+        require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.47.0/min/vs' }});
         require(['vs/editor/editor.main'], function() {
-            // 直接赋值给外部声明的变量
-            monacoEditor = monaco.editor.create(document.getElementById('monaco-editor-container'), {
-                value: '',
-                language: 'plaintext',
-                automaticLayout: true,
-                fontSize: 15,
-                fontFamily: 'JetBrains Mono, Fira Code, monospace',
-                lineHeight: 1.7,
-                minimap: { enabled: false } // 默认关闭小地图以节省空间
-            });
+            try {
+                // 直接赋值给外部声明的变量
+                monacoEditor = monaco.editor.create(document.getElementById('monaco-editor-container'), {
+                    value: '',
+                    language: 'plaintext',
+                    automaticLayout: true,
+                    fontSize: 15,
+                    fontFamily: 'JetBrains Mono, Fira Code, monospace',
+                    lineHeight: 1.7,
+                    minimap: { enabled: false }, // 默认关闭小地图以节省空间
+                    // 禁用一些可能导致键盘事件问题的功能
+                    contextmenu: false,
+                    quickSuggestions: false,
+                    parameterHints: { enabled: false },
+                    suggestOnTriggerCharacters: false
+                });
 
-            // 初始化并应用自定义主题
-            defineAndSetMonacoTheme();
-            // --- 新增：实时语法检查的防抖触发器 ---
-            let debounceTimer;
-            monacoEditor.onDidChangeModelContent(() => {
-                // 清除上一个计时器
-                clearTimeout(debounceTimer);
+                // 初始化并应用自定义主题
+                defineAndSetMonacoTheme();
 
-                // 设置一个新的计时器，在用户停止输入1500毫秒（1.5秒）后触发
-                debounceTimer = setTimeout(() => {
-                    analyzeCurrentFileSyntax();
-                }, 1500);
-            });
+                // --- 新增：实时语法检查的防抖触发器 ---
+                let debounceTimer;
+                monacoEditor.onDidChangeModelContent(() => {
+                    try {
+                        // 清除上一个计时器
+                        clearTimeout(debounceTimer);
+
+                        // 设置一个新的计时器，在用户停止输入1500毫秒（1.5秒）后触发
+                        debounceTimer = setTimeout(() => {
+                            analyzeCurrentFileSyntax();
+                        }, 1500);
+                    } catch (error) {
+                        console.error('Monaco Editor content change handler error:', error);
+                    }
+                });
+            } catch (error) {
+                console.error('Monaco Editor initialization error:', error);
+                // 如果Monaco Editor初始化失败，显示错误信息
+                document.getElementById('monaco-editor-container').innerHTML =
+                    '<div style="padding: 20px; color: var(--accent-error);">编辑器初始化失败，请刷新页面重试</div>';
+            }
         });
         // Cache DOM elements
         loginView = document.getElementById('login-view');
@@ -3096,6 +3558,462 @@ function renderWorkflowUpdate(state) {
             showIde(storedUsername);
         }
     });
+
+    // ===================================================================
+    // 全局变量和函数 (必须在全局作用域中以便onclick调用)
+    // ===================================================================
+
+    // 全局变量
+    let accessToken = null;
+    const API_BASE_URL = '/api/v1';
+
+    // 全局API请求函数
+    async function fetchApi(endpoint, method = 'GET', body = null, expectedStatus) {
+        const options = { method, headers: { 'Authorization': `Bearer ${accessToken}` } };
+        if (body) {
+            options.headers['Content-Type'] = 'application/json';
+            options.body = JSON.stringify(body);
+        }
+        const response = await fetch(API_BASE_URL + endpoint, options);
+        const responseText = await response.text();
+        const isSuccess = expectedStatus ? response.status === expectedStatus : response.ok;
+        if (!isSuccess) {
+            let errorMsg = `请求失败，状态码: ${response.status}`;
+            try { errorMsg = JSON.parse(responseText).error || errorMsg; } catch (e) {}
+            throw new Error(errorMsg);
+        }
+        try { return JSON.parse(responseText); } catch (e) { return {}; }
+    }
+
+    // 存储MQTT事件源连接
+    const mqttEventSources = new Map();
+
+    async function initializeMqttStatus(deviceId) {
+        try {
+            // 获取设备MQTT状态
+            const status = await fetchApi(`/mqtt/devices/${deviceId}/mqtt/status`);
+            console.log(`设备 ${deviceId} MQTT状态:`, status); // 添加调试日志
+            updateMqttStatusUI(deviceId, status);
+
+            // 如果监控已启用，开始接收日志流
+            if (status.monitoring_enabled && status.is_connected) {
+                startMqttLogStream(deviceId);
+            } else if (status.monitoring_enabled && !status.is_connected) {
+                console.warn(`设备 ${deviceId} 监控已启用但未连接，可能需要等待连接建立`);
+                // 延迟重试检查连接状态
+                setTimeout(() => initializeMqttStatus(deviceId), 3000);
+            }
+        } catch (error) {
+            console.error(`初始化设备 ${deviceId} MQTT状态失败:`, error);
+        }
+    }
+
+    function updateMqttStatusUI(deviceId, status) {
+        const statusIndicator = document.getElementById(`mqtt-status-${deviceId}`);
+        const statusText = document.getElementById(`mqtt-status-text-${deviceId}`);
+        const toggleBtn = document.getElementById(`mqtt-toggle-${deviceId}`);
+
+        if (!statusIndicator || !statusText || !toggleBtn) return;
+
+        if (status.monitoring_enabled) {
+            if (status.is_connected) {
+                statusIndicator.className = 'mqtt-status-indicator connected';
+                statusText.textContent = '已连接';
+                toggleBtn.textContent = '停止监控';
+            } else {
+                statusIndicator.className = 'mqtt-status-indicator disconnected';
+                statusText.textContent = '连接中...';
+                toggleBtn.textContent = '停止监控';
+            }
+        } else {
+            statusIndicator.className = 'mqtt-status-indicator disabled';
+            statusText.textContent = '未启用';
+            toggleBtn.textContent = '启用监控';
+        }
+    }
+
+    async function toggleMqttMonitoring(deviceId) {
+        try {
+            const status = await fetchApi(`/mqtt/devices/${deviceId}/mqtt/status`);
+            const newEnabled = !status.monitoring_enabled;
+
+            await fetchApi(`/mqtt/devices/${deviceId}/mqtt/config`, 'PUT', {
+                mqtt_monitoring_enabled: newEnabled
+            });
+
+            if (newEnabled) {
+                startMqttLogStream(deviceId);
+            } else {
+                stopMqttLogStream(deviceId);
+            }
+
+            // 更新状态
+            await initializeMqttStatus(deviceId);
+        } catch (error) {
+            alert(`切换MQTT监控失败: ${error.message}`);
+        }
+    }
+
+    function startMqttLogStream(deviceId) {
+        // 如果已有连接，先关闭
+        stopMqttLogStream(deviceId);
+
+        // EventSource不支持自定义headers，所以通过URL参数传递token
+        const streamUrl = `/api/v1/mqtt/devices/${deviceId}/logs/stream?token=${encodeURIComponent(accessToken)}`;
+        const eventSource = new EventSource(streamUrl);
+
+        eventSource.onmessage = function(event) {
+            try {
+                const logData = JSON.parse(event.data);
+                if (logData.error) {
+                    console.error('MQTT日志流错误:', logData.error);
+                    return;
+                }
+                addMqttLogEntry(deviceId, logData);
+            } catch (error) {
+                console.error('解析MQTT日志数据失败:', error);
+            }
+        };
+
+        eventSource.onerror = function(event) {
+            console.error('MQTT日志流连接错误:', event);
+            // 可以在这里实现重连逻辑
+        };
+
+        mqttEventSources.set(deviceId, eventSource);
+    }
+
+    function stopMqttLogStream(deviceId) {
+        const eventSource = mqttEventSources.get(deviceId);
+        if (eventSource) {
+            eventSource.close();
+            mqttEventSources.delete(deviceId);
+        }
+    }
+
+    function addMqttLogEntry(deviceId, logData) {
+        const container = document.getElementById(`mqtt-log-container-${deviceId}`);
+        if (!container) return;
+
+        // 如果是第一条日志，清空提示文本
+        if (container.children.length === 1 && container.children[0].style.textAlign === 'center') {
+            container.innerHTML = '';
+        }
+
+        const time = new Date(logData.timestamp).toLocaleTimeString();
+        const direction = logData.direction === 'incoming' ? '📥' : '📤';
+
+        const logEntry = document.createElement('div');
+        logEntry.className = `mqtt-log-entry ${logData.direction}`;
+
+        // 格式化payload，如果是JSON则美化显示
+        let formattedPayload = logData.payload;
+        try {
+            const parsed = JSON.parse(logData.payload);
+            formattedPayload = JSON.stringify(parsed, null, 2);
+        } catch (e) {
+            // 不是JSON，保持原样
+        }
+
+        logEntry.innerHTML = `
+            <div class="mqtt-log-header">
+                <span class="mqtt-log-time">${time}</span>
+                <span class="mqtt-log-direction ${logData.direction}">${direction}</span>
+                <span class="mqtt-log-topic">${logData.topic}</span>
+            </div>
+            <div class="mqtt-log-payload">${formattedPayload}</div>
+        `;
+
+        container.appendChild(logEntry);
+
+        // 保持最多100条日志
+        while (container.children.length > 100) {
+            container.removeChild(container.firstChild);
+        }
+
+        // 自动滚动到底部
+        container.scrollTop = container.scrollHeight;
+    }
+
+    function clearMqttLogs(deviceId) {
+        const container = document.getElementById(`mqtt-log-container-${deviceId}`);
+        if (container) {
+            container.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 20px;">日志已清空</div>';
+        }
+    }
+
+    async function debugMqttStatus(deviceId) {
+        console.log('=== MQTT调试信息 ===');
+        try {
+            // 获取状态
+            const status = await fetchApi(`/mqtt/devices/${deviceId}/mqtt/status`);
+            console.log('MQTT状态:', status);
+
+            // 获取配置
+            const config = await fetchApi(`/mqtt/devices/${deviceId}/mqtt/config`);
+            console.log('MQTT配置:', config);
+
+            // 测试连接
+            const testResult = await fetchApi(`/mqtt/devices/${deviceId}/mqtt/test`, 'POST', {
+                mqtt_broker_host: config.mqtt_broker_host,
+                mqtt_broker_port: config.mqtt_broker_port,
+                mqtt_username: config.mqtt_username,
+                mqtt_password: config.mqtt_password
+            });
+            console.log('连接测试结果:', testResult);
+
+            alert(`调试信息已输出到控制台\n监控状态: ${status.monitoring_enabled ? '已启用' : '未启用'}\n连接状态: ${status.is_connected ? '已连接' : '未连接'}`);
+        } catch (error) {
+            console.error('调试失败:', error);
+            alert('调试失败: ' + error.message);
+        }
+    }
+
+    async function openMqttConfigDialog(deviceId) {
+        try {
+            // 获取当前MQTT配置
+            const config = await fetchApi(`/mqtt/devices/${deviceId}/mqtt/config`);
+
+            // 填充表单
+            document.getElementById('mqtt-device-id').value = deviceId;
+            document.getElementById('mqtt-broker-host').value = config.mqtt_broker_host || '';
+            document.getElementById('mqtt-broker-port').value = config.mqtt_broker_port || 1883;
+            document.getElementById('mqtt-username').value = config.mqtt_username || '';
+            document.getElementById('mqtt-password').value = ''; // 出于安全考虑不显示密码
+            document.getElementById('mqtt-client-id').value = config.mqtt_client_id || '';
+            setMqttTopics(config.mqtt_subscribe_topics || []);
+            document.getElementById('mqtt-monitoring-enabled').checked = config.mqtt_monitoring_enabled || false;
+
+            // 清空错误信息
+            const errorDiv = document.getElementById('mqtt-config-error');
+            errorDiv.innerHTML = '';
+            errorDiv.style.color = 'var(--accent-error)';
+
+            // 添加输入验证
+            const hostInput = document.getElementById('mqtt-broker-host');
+            // 移除之前的事件监听器（如果有的话）
+            hostInput.removeEventListener('blur', hostInput._mqttValidation);
+
+            // 添加新的验证函数
+            hostInput._mqttValidation = function() {
+                const originalValue = this.value;
+                const cleanedValue = cleanMqttHost(originalValue);
+                if (originalValue !== cleanedValue && cleanedValue) {
+                    this.value = cleanedValue;
+                    errorDiv.style.color = 'var(--accent-primary)';
+                    errorDiv.innerHTML = `💡 已自动清理主机名: ${originalValue} → ${cleanedValue}`;
+                    setTimeout(() => {
+                        if (errorDiv.innerHTML.includes('已自动清理')) {
+                            errorDiv.innerHTML = '';
+                        }
+                    }, 3000);
+                }
+            };
+            hostInput.addEventListener('blur', hostInput._mqttValidation);
+
+            // 显示对话框
+            document.getElementById('mqtt-config-dialog').showModal();
+        } catch (error) {
+            alert(`获取MQTT配置失败: ${error.message}`);
+        }
+    }
+
+    function setMqttPreset(host) {
+        document.getElementById('mqtt-broker-host').value = host;
+
+        // 根据不同的预设设置不同的默认配置
+        const presets = {
+            'localhost': { port: 1883, username: '', password: '', topics: ['test/topic'] },
+            '127.0.0.1': { port: 1883, username: '', password: '', topics: ['test/topic'] },
+            '192.168.1.100': { port: 1883, username: '', password: '', topics: ['test/topic'] },
+            'test.mosquitto.org': { port: 1883, username: '', password: '', topics: ['$SYS/broker/version'] }
+        };
+
+        const preset = presets[host];
+        if (preset) {
+            document.getElementById('mqtt-broker-port').value = preset.port;
+            document.getElementById('mqtt-username').value = preset.username;
+            document.getElementById('mqtt-password').value = preset.password;
+            setMqttTopics(preset.topics);
+        }
+    }
+
+    // MQTT主题管理函数
+    function addMqttTopicInput(value = '') {
+        const container = document.getElementById('mqtt-topics-container');
+        const row = document.createElement('div');
+        row.className = 'mqtt-topic-input-row';
+
+        const inputId = 'mqtt-topic-' + Date.now();
+        row.innerHTML = `
+            <div class="mqtt-input-with-icon">
+                <span class="mqtt-input-icon">📡</span>
+                <input type="text" id="${inputId}" placeholder="例如: sensor/+/temperature" value="${value}">
+            </div>
+            <button type="button" class="mqtt-topic-remove-btn" onclick="removeMqttTopicInput(this)" title="删除主题">
+                🗑️
+            </button>
+        `;
+
+        container.appendChild(row);
+
+        // 如果是第一个输入框，聚焦
+        if (container.children.length === 1) {
+            row.querySelector('input').focus();
+        }
+    }
+
+    function removeMqttTopicInput(button) {
+        const row = button.parentElement;
+        row.remove();
+
+        // 如果没有输入框了，至少保留一个
+        const container = document.getElementById('mqtt-topics-container');
+        if (container.children.length === 0) {
+            addMqttTopicInput();
+        }
+    }
+
+    function addCommonMqttTopics() {
+        const commonTopics = [
+            '$SYS/broker/version',
+            'sensor/+/temperature',
+            'device/+/status',
+            'data/+/report',
+            'test/topic'
+        ];
+
+        commonTopics.forEach(topic => {
+            addMqttTopicInput(topic);
+        });
+    }
+
+    function getMqttTopics() {
+        const container = document.getElementById('mqtt-topics-container');
+        const topics = [];
+
+        container.querySelectorAll('input[type="text"]').forEach(input => {
+            const value = input.value.trim();
+            if (value) {
+                topics.push(value);
+            }
+        });
+
+        return topics;
+    }
+
+    function setMqttTopics(topics) {
+        const container = document.getElementById('mqtt-topics-container');
+        container.innerHTML = '';
+
+        if (topics && topics.length > 0) {
+            topics.forEach(topic => {
+                addMqttTopicInput(topic);
+            });
+        } else {
+            // 至少添加一个空的输入框
+            addMqttTopicInput();
+        }
+    }
+
+    function cleanMqttHost(host) {
+        // 移除协议前缀
+        host = host.replace(/^(mqtt:\/\/|mqtts:\/\/|tcp:\/\/|ssl:\/\/)/i, '');
+        // 移除路径部分
+        host = host.split('/')[0];
+        return host.trim();
+    }
+
+    async function testMqttConnection() {
+        const deviceId = document.getElementById('mqtt-device-id').value;
+        const testBtn = document.getElementById('mqtt-test-btn');
+        const errorDiv = document.getElementById('mqtt-config-error');
+
+        // 收集配置数据并清理主机名
+        let brokerHost = document.getElementById('mqtt-broker-host').value;
+        brokerHost = cleanMqttHost(brokerHost);
+
+        // 如果主机名被清理了，更新输入框
+        if (brokerHost !== document.getElementById('mqtt-broker-host').value) {
+            document.getElementById('mqtt-broker-host').value = brokerHost;
+        }
+
+        const config = {
+            mqtt_broker_host: brokerHost,
+            mqtt_broker_port: parseInt(document.getElementById('mqtt-broker-port').value),
+            mqtt_username: document.getElementById('mqtt-username').value || null,
+            mqtt_password: document.getElementById('mqtt-password').value || null,
+            mqtt_client_id: document.getElementById('mqtt-client-id').value || null
+        };
+
+        // 验证必填字段
+        if (!config.mqtt_broker_host) {
+            errorDiv.textContent = '请填写Broker地址';
+            return;
+        }
+
+        // 更新按钮状态
+        testBtn.disabled = true;
+        testBtn.textContent = '🔄 测试中...';
+        errorDiv.textContent = '';
+
+        try {
+            const result = await fetchApi(`/mqtt/devices/${deviceId}/mqtt/test`, 'POST', config);
+
+            if (result.success) {
+                errorDiv.style.color = 'var(--accent-success)';
+                errorDiv.innerHTML = '✅ ' + result.message;
+            } else {
+                errorDiv.style.color = 'var(--accent-error)';
+                errorDiv.innerHTML = '❌ ' + result.error.replace(/\n/g, '<br>');
+            }
+        } catch (error) {
+            errorDiv.style.color = 'var(--accent-error)';
+            errorDiv.innerHTML = '❌ 测试失败: ' + error.message.replace(/\n/g, '<br>');
+        } finally {
+            testBtn.disabled = false;
+            testBtn.textContent = '🔍 测试连接';
+        }
+    }
+
+    async function handleMqttConfigSubmit(event) {
+        event.preventDefault();
+
+        const deviceId = document.getElementById('mqtt-device-id').value;
+        const topics = getMqttTopics();
+
+        // 清理主机名
+        let brokerHost = document.getElementById('mqtt-broker-host').value;
+        brokerHost = cleanMqttHost(brokerHost);
+
+        // 如果主机名被清理了，更新输入框
+        if (brokerHost !== document.getElementById('mqtt-broker-host').value) {
+            document.getElementById('mqtt-broker-host').value = brokerHost;
+        }
+
+        const config = {
+            mqtt_broker_host: brokerHost,
+            mqtt_broker_port: parseInt(document.getElementById('mqtt-broker-port').value),
+            mqtt_username: document.getElementById('mqtt-username').value || null,
+            mqtt_password: document.getElementById('mqtt-password').value || null,
+            mqtt_client_id: document.getElementById('mqtt-client-id').value || null,
+            mqtt_subscribe_topics: topics,
+            mqtt_monitoring_enabled: document.getElementById('mqtt-monitoring-enabled').checked
+        };
+
+        try {
+            await fetchApi(`/mqtt/devices/${deviceId}/mqtt/config`, 'PUT', config);
+            document.getElementById('mqtt-config-dialog').close();
+
+            // 重新初始化MQTT状态
+            await initializeMqttStatus(deviceId);
+
+            alert('MQTT配置保存成功！');
+        } catch (error) {
+            document.getElementById('mqtt-config-error').textContent = error.message;
+        }
+    }
+
     </script>
 </body>
 </html>

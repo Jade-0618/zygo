@@ -37,4 +37,7 @@ def create_app(config_name='default'):
     from .api.log_stream_routes import log_stream_blueprint
     app.register_blueprint(log_stream_blueprint, url_prefix='/api/v1/stream')
 
+    from .api.mqtt_routes import mqtt_blueprint
+    app.register_blueprint(mqtt_blueprint, url_prefix='/api/v1/mqtt')
+
     return app
