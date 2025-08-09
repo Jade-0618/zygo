@@ -556,6 +556,9 @@
         .mqtt-input-with-icon textarea {
             padding-left: 35px;
         }
+        .mqtt-input-with-icon.password-wrapper input {
+            padding-right: 40px; /* 为密码切换按钮留出空间 */
+        }
         .mqtt-input-icon {
             position: absolute;
             left: 10px;
@@ -881,15 +884,42 @@
         }
         .form-container h2 { text-align: center; margin-bottom: 10px; font-weight: 500; }
         .form-container input { width: 100%; height: 44px; }
+
+        /* 表单组样式 */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .form-group label {
+            font-size: 0.9em;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            height: 44px;
+        }
         .password-wrapper { position: relative; display: flex; align-items: center; }
         .password-wrapper input { padding-right: 40px; }
         .password-toggle-btn {
-            position: absolute; right: 1px; top: 1px; bottom: 1px;
-            height: auto; width: 40px; background: none; border: none;
-            cursor: pointer; box-shadow: none; padding: 0;
+            position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+            width: 24px; height: 24px; background: transparent;
+            border: none; border-radius: 4px;
+            cursor: pointer; padding: 0;
             display: flex; justify-content: center; align-items: center;
+            transition: all 0.2s ease;
         }
-        .password-toggle-btn svg { stroke: var(--text-secondary); width: 20px; height: 20px; }
+        .password-toggle-btn:hover {
+            background: rgba(106, 90, 205, 0.1);
+        }
+        .password-toggle-btn svg {
+            stroke: var(--text-secondary); width: 16px; height: 16px;
+            transition: stroke 0.2s ease;
+        }
+        .password-toggle-btn:hover svg { stroke: var(--accent-primary); }
         .form-toggle { color: var(--accent-primary); cursor: pointer; text-align: center; font-size: 0.9em; margin-top: 10px; }
         .form-message { text-align: center; min-height: 20px; }
         .error { color: var(--accent-error); }
@@ -1032,53 +1062,116 @@
         }
 
 
-        /* --- 全屏模式 --- */
-        /* 全屏时的背景遮罩 */
+        /* --- 竖直拉伸模式 --- */
+        /* 拉伸时的背景遮罩（轻微） */
         #view-ai-workflow.fullscreen-active {
-            background: rgba(18, 18, 28, 0.8);
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
-            z-index: 1000;
+            background: rgba(18, 18, 28, 0.3);
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+            transition: all 1.2s cubic-bezier(0.23, 1, 0.32, 1);
         }
 
-        /* 全屏时，让内容容器撑满 */
-        #view-ai-workflow.fullscreen-active #initial-prompt-container {
-             height: 100%;
+        /* 输入框wrapper的竖直拉伸动画 - 分离高度和其他属性 */
+        #prompt-input-wrapper {
+            /* 高度变化用更长时间，其他属性用较短时间 */
+            transition:
+                height 3.5s cubic-bezier(0.165, 0.84, 0.44, 1),
+                border-radius 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                box-shadow 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                padding 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            transform-origin: center bottom; /* 从底部中心开始拉伸 */
+            min-height: auto; /* 确保可以缩小到内容高度 */
+        }
+
+        /* 非全屏状态下的自适应高度 */
+        #view-ai-workflow:not(.fullscreen-active) #prompt-input-wrapper {
+            height: auto !important;
         }
 
         /* 核心：输入框wrapper的“变身”效果 */
         #view-ai-workflow.fullscreen-active #prompt-input-wrapper {
-            height: 100%;
-            border-radius: 12px; /* 全屏时可以带一点小圆角，更精致 */
+            height: 90vh !important; /* 拉伸到屏幕90%高度 */
             flex-direction: column;
             align-items: stretch;
-            padding: 24px;
+            padding: 20px;
+            border-radius: 16px; /* 稍微增加圆角 */
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
         }
 
-        /* 全屏时，文本域撑满 */
+        /* 文本域的平滑拉伸 */
+        #raw-text-input {
+            /* 高度变化与输入框同步，其他属性更快 */
+            transition:
+                height 3.5s cubic-bezier(0.165, 0.84, 0.44, 1),
+                font-size 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                padding 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                line-height 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        /* 非全屏状态下的文本域自适应 */
+        #view-ai-workflow:not(.fullscreen-active) #raw-text-input {
+            height: auto !important;
+            max-height: 200px; /* 限制最大高度 */
+            padding: 8px 0; /* 恢复原始内边距 */
+            font-size: 1em; /* 恢复原始字体大小 */
+        }
+
         #view-ai-workflow.fullscreen-active #raw-text-input {
             height: 100%;
-            max-height: none; /* 取消最大高度限制 */
-            font-size: 1.2em; /* 字号也可以稍大一些 */
+            max-height: none;
+            font-size: 1.1em;
+            padding: 35px 60px 60px 15px; /* 上边距35px避免遮挡缩小按钮，右边距60px，下边距60px避免遮挡发送按钮 */
+            line-height: 1.6;
         }
 
-        /* 全屏时，按钮的位置和图标切换 */
+        /* 按钮的平滑位置过渡 */
+        #expand-input-btn {
+            transition: all 1.2s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
         #view-ai-workflow.fullscreen-active #expand-input-btn {
             position: absolute;
-            top: 24px;
-            right: 24px;
+            top: 15px;
+            right: 15px;
             z-index: 10;
+            background: var(--bg-surface-hover);
+            border-radius: 8px;
+            padding: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
-        #view-ai-workflow.fullscreen-active .icon-expand { display: none; }
-        #view-ai-workflow.fullscreen-active .icon-collapse { display: block; }
+        #send-prompt-btn {
+            transition: all 1.2s cubic-bezier(0.23, 1, 0.32, 1);
+        }
 
-        /* 全屏时，发送按钮移动到右下角 */
         #view-ai-workflow.fullscreen-active #send-prompt-btn {
             position: absolute;
-            bottom: 24px;
-            right: 24px;
+            bottom: 15px;
+            right: 15px;
+            background: var(--accent-primary);
+            border-radius: 8px;
+            padding: 12px 16px;
+            box-shadow: 0 4px 12px rgba(106, 90, 205, 0.3);
         }
+
+        /* 图标切换的平滑过渡 */
+        .icon-expand, .icon-collapse {
+            transition: all 0.3s ease;
+        }
+
+        #view-ai-workflow.fullscreen-active .icon-expand {
+            opacity: 0;
+            transform: rotate(180deg) scale(0.8);
+            display: none;
+        }
+
+        #view-ai-workflow.fullscreen-active .icon-collapse {
+            opacity: 1;
+            transform: rotate(0deg) scale(1);
+            display: block;
+        }
+
+
 
         @keyframes slide-up {
             to {
@@ -1086,26 +1179,203 @@
                 transform: translateY(0);
             }
         }
-        /* 思考中的指示器 */
+        /* 思考中的指示器 - 增强版 */
         #thinking-indicator {
             display: none;
-            align-items: center;
-            gap: 15px;
-            padding: 10px;
             position: absolute;
-            top: 25%;
+            top: 35%; /* 调整位置，避免遮挡欢迎语 */
             left: 50%;
             transform: translateX(-50%);
         }
-        #thinking-indicator .spinner-icon {
-            animation: spin 1.5s linear infinite;
-        }
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+
+        .thinking-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            padding: 20px;
+            background: var(--bg-glass);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(106, 90, 205, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            animation: thinking-breathe 3s ease-in-out infinite;
         }
 
-        /* 需求发送气泡动画 */
+        .thinking-icon-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .thinking-content .logo-icon {
+            filter: drop-shadow(0 0 15px var(--accent-primary-glow));
+            animation: thinking-glow 2s ease-in-out infinite alternate;
+        }
+
+        /* 围绕图标的思考粒子 */
+        .thinking-particles {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            pointer-events: none;
+        }
+
+        .thinking-particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: var(--accent-primary);
+            border-radius: 50%;
+            opacity: 0.7;
+        }
+
+        .thinking-particle:nth-child(1) {
+            top: 10px;
+            left: 50%;
+            animation: thinking-orbit-1 4s linear infinite;
+        }
+
+        .thinking-particle:nth-child(2) {
+            top: 50%;
+            right: 10px;
+            animation: thinking-orbit-2 4s linear infinite 0.8s;
+        }
+
+        .thinking-particle:nth-child(3) {
+            bottom: 10px;
+            left: 50%;
+            animation: thinking-orbit-3 4s linear infinite 1.6s;
+        }
+
+        .thinking-particle:nth-child(4) {
+            top: 50%;
+            left: 10px;
+            animation: thinking-orbit-4 4s linear infinite 2.4s;
+        }
+
+        .thinking-particle:nth-child(5) {
+            top: 20px;
+            right: 20px;
+            animation: thinking-orbit-5 4s linear infinite 3.2s;
+        }
+
+        /* 思考文字 */
+        .thinking-text {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+            color: var(--text-secondary);
+        }
+
+        .thinking-message {
+            font-weight: 500;
+        }
+
+        .thinking-dots {
+            display: flex;
+            gap: 2px;
+        }
+
+        .thinking-dots .dot {
+            animation: thinking-dot-bounce 1.4s ease-in-out infinite;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .thinking-dots .dot:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .thinking-dots .dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .thinking-dots .dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        /* 思考指示器的脉冲效果 */
+        #thinking-indicator.pulse .thinking-content {
+            animation: thinking-pulse 0.6s ease-out, thinking-breathe 3s ease-in-out infinite;
+        }
+
+        /* 动画关键帧 */
+        @keyframes thinking-breathe {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            }
+            50% {
+                transform: scale(1.02);
+                box-shadow: 0 12px 40px rgba(106, 90, 205, 0.15);
+            }
+        }
+
+        @keyframes thinking-glow {
+            0% {
+                filter: drop-shadow(0 0 15px var(--accent-primary-glow));
+            }
+            100% {
+                filter: drop-shadow(0 0 25px var(--accent-primary-glow));
+            }
+        }
+
+        @keyframes thinking-pulse {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            }
+            50% {
+                transform: scale(1.1);
+                box-shadow: 0 16px 48px rgba(106, 90, 205, 0.3);
+            }
+            100% {
+                transform: scale(1);
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            }
+        }
+
+        @keyframes thinking-dot-bounce {
+            0%, 80%, 100% {
+                transform: translateY(0);
+                opacity: 0.7;
+            }
+            40% {
+                transform: translateY(-8px);
+                opacity: 1;
+            }
+        }
+
+        @keyframes thinking-orbit-1 {
+            0% { transform: rotate(0deg) translateX(30px) rotate(0deg); }
+            100% { transform: rotate(360deg) translateX(30px) rotate(-360deg); }
+        }
+
+        @keyframes thinking-orbit-2 {
+            0% { transform: rotate(0deg) translateX(25px) rotate(0deg); }
+            100% { transform: rotate(360deg) translateX(25px) rotate(-360deg); }
+        }
+
+        @keyframes thinking-orbit-3 {
+            0% { transform: rotate(0deg) translateX(35px) rotate(0deg); }
+            100% { transform: rotate(360deg) translateX(35px) rotate(-360deg); }
+        }
+
+        @keyframes thinking-orbit-4 {
+            0% { transform: rotate(0deg) translateX(28px) rotate(0deg); }
+            100% { transform: rotate(360deg) translateX(28px) rotate(-360deg); }
+        }
+
+        @keyframes thinking-orbit-5 {
+            0% { transform: rotate(0deg) translateX(32px) rotate(0deg); }
+            100% { transform: rotate(360deg) translateX(32px) rotate(-360deg); }
+        }
+
+        /* 需求发送气泡动画 - 增强版 */
         #prompt-animation-container {
             position: absolute;
             top: 0;
@@ -1113,29 +1383,171 @@
             width: 100%;
             height: 100%;
             pointer-events: none; /* 让鼠标事件穿透 */
+            overflow: hidden; /* 防止动画元素溢出 */
         }
         .prompt-bubble {
             position: absolute;
-            bottom: 100px; /* 从输入框附近开始 */
+            bottom: 120px; /* 从输入框附近开始 */
+            left: 50%;
+            transform: translateX(-50%) scale(0.8);
+            padding: 15px 25px;
+            background: linear-gradient(135deg, var(--bg-surface) 0%, var(--bg-surface-hover) 100%);
+            border: 1px solid var(--accent-primary);
+            border-radius: 25px;
+            box-shadow:
+                0 8px 25px rgba(0,0,0,0.15),
+                0 0 20px var(--accent-primary-glow);
+            animation: enhanced-bubble-flight 2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+            max-width: 600px;
+            white-space: pre-wrap;
+            word-break: break-word;
+            font-size: 0.95em;
+            line-height: 1.4;
+            color: var(--text-primary);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        /* 气泡尾巴效果 */
+        .prompt-bubble::before {
+            content: '';
+            position: absolute;
+            bottom: -8px;
             left: 50%;
             transform: translateX(-50%);
-            padding: 12px 20px;
-            background-color: var(--bg-surface);
-            border-radius: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            animation: bubble-up 1s ease-out forwards;
-            max-width: 800px;
-            white-space: pre-wrap;
-            word-break: break-all;
+            width: 16px;
+            height: 16px;
+            background: inherit;
+            border: inherit;
+            border-top: none;
+            border-left: none;
+            border-radius: 0 0 25px 0;
+            transform: translateX(-50%) rotate(45deg);
         }
-        @keyframes bubble-up {
-            from {
-                bottom: 100px;
+
+        /* 增强的飞行动画 - 流畅版本，飞向思考指示器 */
+        @keyframes enhanced-bubble-flight {
+            0% {
+                bottom: 120px;
+                left: 50%;
+                transform: translateX(-50%) scale(0.8) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+                transform: translateX(-50%) scale(1) rotate(1deg);
+            }
+            25% {
+                bottom: 200px;
+                left: 48%;
+                transform: translateX(-50%) scale(1.02) rotate(-0.5deg);
                 opacity: 1;
             }
-            to {
-                bottom: 75%;
+            45% {
+                bottom: 300px;
+                left: 51%;
+                transform: translateX(-50%) scale(0.98) rotate(0.5deg);
+                opacity: 1;
+            }
+            65% {
+                bottom: 400px;
+                left: 49%;
+                transform: translateX(-50%) scale(0.95) rotate(-0.3deg);
+                opacity: 0.9;
+            }
+            80% {
+                bottom: 500px;
+                left: 50%;
+                transform: translateX(-50%) scale(0.8) rotate(0deg);
+                opacity: 0.6;
+            }
+            95% {
+                bottom: 65%; /* 飞向思考指示器位置 (35% + 30%) */
+                left: 50%;
+                transform: translateX(-50%) scale(0.4) rotate(0deg);
+                opacity: 0.2;
+            }
+            100% {
+                bottom: 65%;
+                left: 50%;
+                transform: translateX(-50%) scale(0.1) rotate(0deg);
                 opacity: 0;
+            }
+        }
+
+        /* 添加粒子效果容器 */
+        .bubble-particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        /* 粒子效果 - 增强版 */
+        .particle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: var(--accent-primary);
+            border-radius: 50%;
+            opacity: 0;
+            box-shadow: 0 0 6px var(--accent-primary-glow);
+        }
+
+        .particle.type-1 {
+            animation: particle-float-1 2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+
+        .particle.type-2 {
+            animation: particle-float-2 2.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+
+        .particle.type-3 {
+            animation: particle-float-3 1.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+
+        @keyframes particle-float-1 {
+            0% {
+                opacity: 0.8;
+                transform: scale(1) translateY(0px) translateX(0px);
+            }
+            50% {
+                opacity: 0.6;
+                transform: scale(1.2) translateY(-50px) translateX(20px);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(0.3) translateY(-120px) translateX(40px);
+            }
+        }
+
+        @keyframes particle-float-2 {
+            0% {
+                opacity: 0.8;
+                transform: scale(1) translateY(0px) translateX(0px);
+            }
+            50% {
+                opacity: 0.6;
+                transform: scale(1.1) translateY(-60px) translateX(-25px);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(0.2) translateY(-140px) translateX(-50px);
+            }
+        }
+
+        @keyframes particle-float-3 {
+            0% {
+                opacity: 0.8;
+                transform: scale(1) translateY(0px) translateX(0px);
+            }
+            50% {
+                opacity: 0.6;
+                transform: scale(1.3) translateY(-40px) translateX(10px);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(0.1) translateY(-100px) translateX(15px);
             }
         }
         /* --- 全屏按钮的核心改造 --- */
@@ -1143,6 +1555,8 @@
             /* 为按钮自身也添加过渡效果 */
             transition: all 0.4s ease-in-out;
         }
+
+
 
         #view-ai-workflow.fullscreen-active #expand-input-btn {
             /* 全屏时，将按钮定位到右上角 */
@@ -1252,8 +1666,32 @@
                         </div>
 
                         <div id="thinking-indicator" style="display: none;">
-                            <svg class="logo-icon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>
-                            <svg class="spinner-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>
+                            <div class="thinking-content">
+                                <div class="thinking-icon-container">
+                                    <svg class="logo-icon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+                                        <path d="M5 3v4"/>
+                                        <path d="M19 17v4"/>
+                                        <path d="M3 5h4"/>
+                                        <path d="M17 19h4"/>
+                                    </svg>
+                                    <div class="thinking-particles">
+                                        <div class="thinking-particle"></div>
+                                        <div class="thinking-particle"></div>
+                                        <div class="thinking-particle"></div>
+                                        <div class="thinking-particle"></div>
+                                        <div class="thinking-particle"></div>
+                                    </div>
+                                </div>
+                                <div class="thinking-text">
+                                    <span class="thinking-message">AI正在思考</span>
+                                    <div class="thinking-dots">
+                                        <span class="dot">.</span>
+                                        <span class="dot">.</span>
+                                        <span class="dot">.</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <div id="prompt-input-wrapper">
@@ -1386,15 +1824,45 @@
             <h2 id="device-dialog-title">注册新设备</h2>
             <form id="device-form" style="display: flex; flex-direction: column; gap: 15px;">
                 <input type="hidden" id="device-internal-id">
-                <input type="text" id="device-nickname" placeholder="设备昵称 (例如: 客厅的温湿度计)" required>
-                <input type="text" id="device-board" placeholder="开发板型号 (例如: esp32dev)" required>
-                <select id="cloud-platform">
-                    <option value="tuya" selected>涂鸦智能 (Tuya)</option>
-                    <option value="other">其他</option>
-                </select>
-                <input type="text" id="cloud-product-id" placeholder="产品ID (Product ID)">
-                <input type="text" id="cloud-device-id" placeholder="设备ID (Device ID)">
-                <input type="password" id="cloud-device-secret" placeholder="设备密钥 (Device Secret)">
+
+                <div class="form-group">
+                    <label for="device-nickname">设备昵称</label>
+                    <input type="text" id="device-nickname" placeholder="例如: 客厅的温湿度计" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="device-board">开发板型号</label>
+                    <input type="text" id="device-board" placeholder="例如: esp32dev" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="cloud-platform">云平台</label>
+                    <select id="cloud-platform">
+                        <option value="tuya" selected>涂鸦智能 (Tuya)</option>
+                        <option value="other">其他</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="cloud-product-id">产品ID</label>
+                    <input type="text" id="cloud-product-id" placeholder="Product ID">
+                </div>
+
+                <div class="form-group">
+                    <label for="cloud-device-id">设备ID</label>
+                    <input type="text" id="cloud-device-id" placeholder="Device ID">
+                </div>
+
+                <div class="form-group">
+                    <label for="cloud-device-secret">设备密钥</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="cloud-device-secret" placeholder="Device Secret">
+                        <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('cloud-device-secret', this)">
+                            <svg class="eye-open" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                            <svg class="eye-closed" style="display: none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>
+                        </button>
+                    </div>
+                </div>
                 <div id="device-peripherals-container" style="margin-top: 10px; border-top: 1px solid var(--border-color); padding-top: 15px;"></div>
                 <button type="button" class="secondary" onclick="addDevicePeripheralRow()">+ 添加外设</button>
                 <p id="device-form-error" class="form-message error"></p>
@@ -1412,7 +1880,13 @@
             <p>在这里配置您的个人偏好，例如Wi-Fi凭证，用于自动写入设备代码。</p>
             <form id="settings-form" style="display: flex; flex-direction: column; gap: 15px;">
                  <input type="text" id="wifi-ssid" placeholder="Wi-Fi 名称 (SSID)">
-                 <input type="password" id="wifi-password" placeholder="Wi-Fi 密码">
+                 <div class="password-wrapper">
+                     <input type="password" id="wifi-password" placeholder="Wi-Fi 密码">
+                     <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('wifi-password', this)">
+                         <svg class="eye-open" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                         <svg class="eye-closed" style="display: none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>
+                     </button>
+                 </div>
                  <p id="settings-message" class="form-message"></p>
             </form>
              <div class="dialog-actions">
@@ -1485,9 +1959,13 @@
                         </div>
                         <div class="mqtt-form-group">
                             <label for="mqtt-password">密码 <span class="label-optional">(可选)</span></label>
-                            <div class="mqtt-input-with-icon">
+                            <div class="mqtt-input-with-icon password-wrapper">
                                 <span class="mqtt-input-icon">🔑</span>
                                 <input type="password" id="mqtt-password" placeholder="MQTT密码">
+                                <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('mqtt-password', this)" style="right: 12px;">
+                                    <svg class="eye-open" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                                    <svg class="eye-closed" style="display: none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -1996,18 +2474,45 @@
         const thinkingIndicator = document.getElementById('thinking-indicator');
         const animationContainer = document.getElementById('prompt-animation-container');
 
-        // 1. 创建并播放气泡动画
+        // 1. 创建并播放增强的气泡动画
         const bubble = document.createElement('div');
         bubble.className = 'prompt-bubble';
         bubble.textContent = rawText;
         animationContainer.appendChild(bubble);
-        setTimeout(() => bubble.remove(), 1000); // 动画结束后移除
 
-        // 2. 切换UI状态
+        // 创建粒子效果
+        createBubbleParticles(animationContainer);
+
+        // 2. 立即隐藏输入框，但延迟显示思考指示器以实现联动
         inputWrapper.style.display = 'none';
-        thinkingIndicator.style.display = 'flex';
         rawTextInput.value = ''; // 清空输入框
         document.getElementById('send-prompt-btn').disabled = true;
+
+        // 3. 延迟显示思考指示器，让气泡先飞一段时间
+        setTimeout(() => {
+            thinkingIndicator.style.display = 'flex';
+            // 添加思考指示器的入场动画
+            thinkingIndicator.style.opacity = '0';
+            thinkingIndicator.style.transform = 'translateX(-50%) scale(0.8)';
+            thinkingIndicator.style.transition = 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
+
+            // 触发入场动画
+            requestAnimationFrame(() => {
+                thinkingIndicator.style.opacity = '1';
+                thinkingIndicator.style.transform = 'translateX(-50%) scale(1)';
+
+                // 添加脉冲效果，表示"接收"到了气泡
+                setTimeout(() => {
+                    thinkingIndicator.classList.add('pulse');
+                    setTimeout(() => {
+                        thinkingIndicator.classList.remove('pulse');
+                    }, 600);
+                }, 200);
+            });
+        }, 1200); // 气泡飞行1.2秒后显示思考指示器
+
+        // 4. 动画结束后移除气泡
+        setTimeout(() => bubble.remove(), 2000);
 
 
         isLocalProject = false;
@@ -3043,6 +3548,40 @@
 
     function formatTimestamp(date = new Date()) { return date.toLocaleTimeString('en-GB'); }
 
+    // 创建气泡粒子效果 - 增强版
+    function createBubbleParticles(container) {
+        const particleCount = 12; // 增加粒子数量
+
+        for (let i = 0; i < particleCount; i++) {
+            setTimeout(() => {
+                const particle = document.createElement('div');
+                const particleType = (i % 3) + 1; // 循环使用3种粒子类型
+                particle.className = `particle type-${particleType}`;
+
+                // 更自然的位置分布（围绕气泡周围）
+                const angle = (i / particleCount) * 2 * Math.PI + Math.random() * 0.5;
+                const radius = 30 + Math.random() * 40;
+                const x = 50 + Math.cos(angle) * (radius / 100) * 50; // 转换为百分比
+                const y = 120 + Math.sin(angle) * radius;
+
+                particle.style.left = x + '%';
+                particle.style.bottom = y + 'px';
+
+                // 随机延迟，让粒子错开出现
+                particle.style.animationDelay = (Math.random() * 0.8) + 's';
+
+                container.appendChild(particle);
+
+                // 动画结束后移除粒子
+                setTimeout(() => {
+                    if (particle.parentNode) {
+                        particle.remove();
+                    }
+                }, 2500);
+            }, i * 80); // 稍微缩短错开时间，让效果更连贯
+        }
+    }
+
     function appendToWorkflowStream(htmlContent) {
         const container = document.getElementById('workflow-stream-container');
         container.insertAdjacentHTML('beforeend', htmlContent);
@@ -3427,8 +3966,35 @@ function renderWorkflowUpdate(state) {
 
         sendPromptBtn.addEventListener('click', handleInitialSubmit);
         expandInputBtn.addEventListener('click', () => {
-            // 【核心修正】将 fullscreen-active class 切换到主视图容器上
-            document.getElementById('view-ai-workflow').classList.toggle('fullscreen-active');
+            const workflowView = document.getElementById('view-ai-workflow');
+            const inputWrapper = document.getElementById('prompt-input-wrapper');
+
+            if (workflowView.classList.contains('fullscreen-active')) {
+                // 缩小时：记录当前内容，然后恢复到原始高度
+                const currentContent = document.getElementById('raw-text-input').value;
+
+                // 移除全屏类
+                workflowView.classList.remove('fullscreen-active');
+
+                // 如果没有内容或只有空白，强制设置为自动高度
+                if (!currentContent.trim()) {
+                    setTimeout(() => {
+                        inputWrapper.style.height = 'auto';
+                        // 确保文本域也回到原始状态
+                        const textInput = document.getElementById('raw-text-input');
+                        textInput.style.height = 'auto';
+                    }, 100);
+                }
+            } else {
+                // 展开时：记录原始高度，然后展开
+                const originalHeight = inputWrapper.offsetHeight;
+                inputWrapper.setAttribute('data-original-height', originalHeight + 'px');
+
+                // 清除任何内联样式，让CSS接管
+                inputWrapper.style.height = '';
+
+                workflowView.classList.add('fullscreen-active');
+            }
         });
         document.getElementById('login-button').addEventListener('click', login);
         document.getElementById('register-button').addEventListener('click', register);
